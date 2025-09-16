@@ -1,4 +1,4 @@
-# AZ-AKS-test
+# Asimov-k8s
 
 Goals:
  - Implement FluxCD GitOps in AKS K8s test environment
@@ -18,7 +18,7 @@ az k8s-configuration flux create \
   --resource-group rg-asimov \
   --cluster-type managedClusters \
   --scope cluster \
-  --url https://github.com/utkdigitalinitiatives/AZ-AKS-test \
+  --url https://github.com/utkdigitalinitiatives/Asimov-k8s \
   --branch main \
   --interval 1m \
   --kustomization name=infrastructure path=./infrastructure/staging prune=true \
@@ -33,7 +33,7 @@ az k8s-configuration flux create \
   --resource-group rg-asimov \
   --cluster-type managedClusters \
   --scope cluster \
-  --url https://github.com/utkdigitalinitiatives/AZ-AKS-test \
+  --url https://github.com/utkdigitalinitiatives/Asimov-k8s \
   --branch main \
   --interval 1m \
   --kustomization name=infrastructure path=./infrastructure/production prune=true \
