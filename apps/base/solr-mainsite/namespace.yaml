@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: solr-mainsite
+  labels:
+    name: solr-mainsite
+    app.kubernetes.io/name: solr-mainsite
+    app.kubernetes.io/component: solr-namespace

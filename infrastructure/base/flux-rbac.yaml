@@ -1,0 +1,243 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: solr-system
+  name: flux-applier-helm
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps", "services", "serviceaccounts", "pods", "persistentvolumeclaims", "events", "endpoints"]
+  verbs: ["*"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+  verbs: ["*"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["*"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles", "rolebindings"]
+  verbs: ["*"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["*"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["*"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flux-applier-helm
+  namespace: solr-system
+subjects:
+- kind: ServiceAccount
+  name: flux-applier
+  namespace: default
+roleRef:
+  kind: Role
+  name: flux-applier-helm
+  apiGroup: rbac.authorization.k8s.io
+---
+# Enhanced ClusterRole for Solr and Zookeeper operators
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: flux-applier-cluster-admin
+rules:
+# CRD management
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["*"]
+# Webhook management
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["mutatingwebhookconfigurations", "validatingwebhookconfigurations"]
+  verbs: ["*"]
+# RBAC management (CRITICAL: needed for operators to create their own RBAC)
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterroles", "clusterrolebindings"]
+  verbs: ["*"]
+# Core resources that operators need cluster-wide access to
+- apiGroups: [""]
+  resources: ["nodes", "namespaces", "pods", "services", "endpoints", "configmaps", "secrets", "persistentvolumeclaims", "events", "serviceaccounts"]
+  verbs: ["*"]
+# Apps resources
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+  verbs: ["*"]
+# Storage classes
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses"]
+  verbs: ["get", "list"]
+# Policy resources
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["*"]
+# Networking
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["*"]
+# Solr CRDs (for when the operator creates them)
+- apiGroups: ["solr.apache.org"]
+  resources: ["*"]
+  verbs: ["*"]
+# Zookeeper CRDs (for when the operator creates them)
+- apiGroups: ["zookeeper.pravega.io"]
+  resources: ["*"]
+  verbs: ["*"]
+# Coordination (for leader election)
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flux-applier-cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: flux-applier
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: flux-applier-cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+# Namespace-scoped Role for Zookeeper Operator
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: solr-system
+  name: zookeeper-operator
+rules:
+- apiGroups: [""]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["apps"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["policy"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["zookeeper.pravega.io"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zookeeper-operator
+  namespace: solr-system
+subjects:
+- kind: ServiceAccount
+  name: zookeeper-operator
+  namespace: solr-system
+roleRef:
+  kind: Role
+  name: zookeeper-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+# Additional RoleBinding for flux-applier from default namespace to manage solr-system
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flux-applier-cross-namespace
+  namespace: solr-system
+subjects:
+- kind: ServiceAccount
+  name: flux-applier
+  namespace: default
+roleRef:
+  kind: Role
+  name: flux-applier-helm
+  apiGroup: rbac.authorization.k8s.io
+---
+# RBAC bindings for solr-operator service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: solr-operator-helm
+  namespace: solr-system
+subjects:
+- kind: ServiceAccount
+  name: solr-operator
+  namespace: solr-system
+roleRef:
+  kind: Role
+  name: flux-applier-helm
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: solr-operator-cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: solr-operator
+  namespace: solr-system
+roleRef:
+  kind: ClusterRole
+  name: flux-applier-cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+# Service accounts for operators in solr-system namespace
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: solr-operator
+  namespace: solr-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zookeeper-operator
+  namespace: solr-system
+---
+# Enhanced cluster-wide permissions for Zookeeper Operator
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: zookeeper-operator-cluster
+rules:
+# All core resources with full permissions
+- apiGroups: [""]
+  resources: ["*"]
+  verbs: ["*"]
+# All apps resources
+- apiGroups: ["apps"]
+  resources: ["*"]
+  verbs: ["*"]
+# Policy resources
+- apiGroups: ["policy"]
+  resources: ["*"]
+  verbs: ["*"]
+# Zookeeper CRDs
+- apiGroups: ["zookeeper.pravega.io"]
+  resources: ["*"]
+  verbs: ["*"]
+# Storage resources
+- apiGroups: ["storage.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list"]
+# Coordination resources
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: zookeeper-operator-cluster
+subjects:
+- kind: ServiceAccount
+  name: zookeeper-operator
+  namespace: solr-system
+roleRef:
+  kind: ClusterRole
+  name: zookeeper-operator-cluster
+  apiGroup: rbac.authorization.k8s.io

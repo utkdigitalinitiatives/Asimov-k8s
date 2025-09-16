@@ -1,0 +1,36 @@
+├── infrastructure/
+│   ├── base/
+│   │   ├── solr-system-namespace.yaml
+│   │   ├── solr-crds.yaml
+│   │   ├── solr-operator.yaml
+│   │   └── kustomization.yaml
+│   ├── staging/
+│   │   ├── kustomization.yaml
+│   │   └── solr-operator-values.yaml
+│   └── production/
+│       ├── kustomization.yaml
+│       └── solr-operator-values.yaml
+├── apps/
+│   ├── base/
+│   │   └── solr-search/
+│   │       ├── namespace.yaml
+│   │       ├── zookeeper.yaml
+│   │       ├── solrcloud.yaml
+│   │       └── kustomization.yaml
+│   ├── staging/
+│   │   └── solr-search/
+│   │       ├── kustomization.yaml
+│   │       ├── solrcloud-values.yaml
+│   │       └── ingress.yaml
+│   └── production/
+│       └── solr-search/
+│           ├── kustomization.yaml
+│           ├── solrcloud-values.yaml
+│           └── ingress.yaml
+└── clusters/
+    ├── staging/
+    │   ├── infrastructure.yaml
+    │   └── apps.yaml
+    └── production/
+        ├── infrastructure.yaml
+        └── apps.yaml

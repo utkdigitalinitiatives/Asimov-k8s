@@ -1,0 +1,70 @@
+apiVersion: solr.apache.org/v1beta1
+kind: SolrCloud
+metadata:
+  name: solr-mainsite
+  namespace: solr-mainsite
+spec:
+  # Solr version and replicas
+  replicas: 3
+  solrImage:
+    tag: "9.8.1"
+  
+  # Java memory configuration
+  solrJavaMem: "-Xms1g -Xmx2g"
+  
+  # ZooKeeper reference - using the shared ZooKeeper cluster from solr-volopedia
+  zookeeperRef:
+    connectionInfo:
+      internalConnectionString: "staging-volopedia-zookeeper-0.staging-volopedia-zookeeper-headless.solr-volopedia.svc.cluster.local:2181,staging-volopedia-zookeeper-1.staging-volopedia-zookeeper-headless.solr-volopedia.svc.cluster.local:2181,staging-volopedia-zookeeper-2.staging-volopedia-zookeeper-headless.solr-volopedia.svc.cluster.local:2181"
+      chroot: "/mainsite"
+  
+  # Storage configuration
+  dataStorage:
+    persistent:
+      reclaimPolicy: Delete
+      pvcTemplate:
+        spec:
+          storageClassName: default
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 20Gi
+  
+  # Update strategy
+  updateStrategy:
+    method: "Managed"
+    managed:
+      maxPodsUnavailable: 1
+  
+  # Solr configuration
+  solrOpts: "-Dsolr.autoSoftCommit.maxTime=10000"
+  
+  # Pod configuration
+  customSolrKubeOptions:
+    podOptions:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  solr-cloud: solr-mainsite
+              topologyKey: kubernetes.io/hostname
+      
+      # Environment variables
+      envVars:
+      - name: SOLR_LOG_LEVEL
+        value: "INFO"
+      - name: GC_TUNE
+        value: "-XX:+UseG1GC -XX:+UseStringDeduplication"
+  
+  # Service configuration for external access
+  solrAddressability:
+    external:
+      method: Ingress
+      domainName: "mainsite.local"
+      hideCommon: false
+    commonServicePort: 8983
+    kubeDomain: "cluster.local"

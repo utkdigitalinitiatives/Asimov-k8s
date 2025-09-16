@@ -1,0 +1,61 @@
+apiVersion: zookeeper.pravega.io/v1beta1
+kind: ZookeeperCluster
+metadata:
+  name: volopedia-zookeeper
+  namespace: solr-volopedia
+spec:
+  replicas: 3
+  
+  # Storage configuration
+  persistence:
+    reclaimPolicy: Delete
+    spec:
+      storageClassName: default
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi
+  
+  # ZooKeeper configuration
+  config:
+    initLimit: 10
+    syncLimit: 2
+    tickTime: 2000
+    globalOutstandingLimit: 1000
+    preAllocSize: 65536
+    snapCount: 10000
+    commitLogCount: 500
+    snapSizeLimitInKb: 4194304
+    maxCnxns: 0
+    maxClientCnxns: 60
+    minSessionTimeout: 4000
+    maxSessionTimeout: 40000
+    autoPurgePurgeInterval: 1
+    autoPurgeSnapRetainCount: 3
+    quorumListenOnAllIPs: false
+  
+  # Pod configuration
+  pod:
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "100m"
+      limits:
+        memory: "1Gi"
+        cpu: "200m"
+    securityContext:
+      runAsUser: 1000
+      fsGroup: 1000
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - volopedia-zookeeper
+            topologyKey: kubernetes.io/hostname

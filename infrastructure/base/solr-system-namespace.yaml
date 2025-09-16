@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: solr-system
+  labels:
+    name: solr-system
+    app.kubernetes.io/name: solr-system
+    app.kubernetes.io/component: operator-namespace

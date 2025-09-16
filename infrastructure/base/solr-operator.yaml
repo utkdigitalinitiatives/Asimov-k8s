@@ -1,0 +1,59 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: apache-solr
+  namespace: solr-system
+spec:
+  interval: 24h
+  url: https://solr.apache.org/charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: solr-operator
+  namespace: solr-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: solr-operator
+      version: "0.9.1"
+      sourceRef:
+        kind: HelmRepository
+        name: apache-solr
+        namespace: solr-system
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Watch all namespaces for Solr resources
+    watchNamespaces: ""
+    
+    # Disable CRD creation since we handle it separately
+    crds:
+      create: false
+    
+    # Operator resource configuration
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    
+    # Install Zookeeper Operator as dependency
+    zookeeper-operator:
+      install: true
+      use: true
+      resources:
+        limits:
+          cpu: 200m
+          memory: 256Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi

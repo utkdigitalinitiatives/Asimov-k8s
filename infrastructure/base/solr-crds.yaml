@@ -1,0 +1,75 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: install-solr-crds
+  namespace: solr-system
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-weight: "-1"
+spec:
+  template:
+    spec:
+      serviceAccountName: solr-crd-installer
+      containers:
+      - name: install-crds
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Installing Solr CRDs with server-side apply..."
+          
+          # Use server-side apply to handle large CRDs
+          echo "Installing all CRDs with server-side apply..."
+          kubectl apply --server-side=true -f https://solr.apache.org/operator/downloads/crds/v0.9.1/all-with-dependencies.yaml || {
+            echo "Server-side apply failed, trying individual CRDs..."
+            
+            # Install CRDs individually with server-side apply
+            echo "Installing SolrBackup CRD..."
+            kubectl apply --server-side=true -f https://solr.apache.org/operator/downloads/crds/v0.9.1/solrbackups.yaml
+            
+            echo "Installing ZookeeperCluster CRD..."
+            kubectl apply --server-side=true -f https://solr.apache.org/operator/downloads/crds/v0.9.1/zookeeperclusters.yaml
+            
+            echo "Installing SolrCloud CRD..."
+            kubectl apply --server-side=true -f https://solr.apache.org/operator/downloads/crds/v0.9.1/solrclouds.yaml
+            
+            echo "Installing SolrPrometheusExporter CRD..."
+            kubectl apply --server-side=true -f https://solr.apache.org/operator/downloads/crds/v0.9.1/solrprometheusexporters.yaml
+          }
+          
+          echo "Verifying CRDs are installed..."
+          kubectl get crd | grep solr
+          kubectl get crd | grep zookeeper
+          
+          echo "CRDs installation completed successfully"
+      restartPolicy: OnFailure
+  backoffLimit: 3
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: solr-crd-installer
+  namespace: solr-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: solr-crd-installer
+rules:
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "list", "create", "update", "patch", "replace", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: solr-crd-installer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: solr-crd-installer
+subjects:
+- kind: ServiceAccount
+  name: solr-crd-installer
+  namespace: solr-system

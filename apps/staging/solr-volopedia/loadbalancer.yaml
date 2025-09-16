@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: solr-volopedia-loadbalancer
+  namespace: solr-volopedia
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/solr/admin/info/health"
+spec:
+  type: LoadBalancer
+  selector:
+    solr-cloud: staging-solr-volopedia
+    technology: solr-cloud
+  ports:
+    - name: solr-http
+      port: 8983
+      targetPort: 8983
+      protocol: TCP

@@ -1,0 +1,43 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: solr-operator
+  namespace: solr-system
+spec:
+  values:
+    # Staging-specific operator configuration
+    resources:
+      limits:
+        cpu: 150m
+        memory: 200Mi
+      requests:
+        cpu: 50m
+        memory: 100Mi
+    
+    watchNamespaces: ""
+    
+    # Configure to use existing ServiceAccount instead of creating one
+    serviceAccount:
+      create: false
+      name: solr-operator
+    
+    # Disable RBAC creation since we're managing it separately
+    rbac:
+      create: false
+    
+    zookeeper-operator:
+      install: true
+      resources:
+        limits:
+          cpu: 150m
+          memory: 200Mi
+        requests:
+          cpu: 50m
+          memory: 100Mi
+      use: true
+      # Also disable RBAC for zookeeper-operator since we're managing it
+      rbac:
+        create: false
+      serviceAccount:
+        create: false
+        name: zookeeper-operator
