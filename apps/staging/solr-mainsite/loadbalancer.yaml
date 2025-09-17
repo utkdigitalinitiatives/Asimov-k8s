@@ -7,7 +7,7 @@ metadata:
     service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/solr/admin/info/health"
 spec:
   type: LoadBalancer
-  loadBalancerIP: "130.131.209.66"
+  loadBalancerIP: "52.232.165.170"
   selector:
     solr-cloud: staging-solr-mainsite
     technology: solr-cloud
