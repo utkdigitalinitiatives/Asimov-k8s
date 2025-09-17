@@ -11,7 +11,7 @@ spec:
       serviceAccountName: solr-crd-installer
       containers:
       - name: install-crds
-        image: registry.k8s.io/kubectl:v1.30.0
+        image: alpine/k8s:1.30.3
         command:
         - /bin/sh
         - -c
