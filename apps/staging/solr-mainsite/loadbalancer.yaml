@@ -14,5 +14,5 @@ spec:
   ports:
     - name: solr-http
       port: 8983
-      targetPort: 8983
+      targetPort: 80
       protocol: TCP
