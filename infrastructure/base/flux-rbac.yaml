@@ -105,6 +105,19 @@ roleRef:
   name: flux-applier-cluster-admin
   apiGroup: rbac.authorization.k8s.io
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flux-applier-solr-system-cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: flux-applier
+  namespace: solr-system
+roleRef:
+  kind: ClusterRole
+  name: flux-applier-cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
 # Namespace-scoped Role for Zookeeper Operator
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -157,6 +170,21 @@ roleRef:
   name: flux-applier-helm
   apiGroup: rbac.authorization.k8s.io
 ---
+# RoleBinding for flux-applier in solr-system namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flux-applier-solr-system
+  namespace: solr-system
+subjects:
+- kind: ServiceAccount
+  name: flux-applier
+  namespace: solr-system
+roleRef:
+  kind: Role
+  name: flux-applier-helm
+  apiGroup: rbac.authorization.k8s.io
+---
 # RBAC bindings for solr-operator service account
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -186,6 +214,12 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ---
 # Service accounts for operators in solr-system namespace
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flux-applier
+  namespace: solr-system
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
