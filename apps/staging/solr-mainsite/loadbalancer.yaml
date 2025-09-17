@@ -9,10 +9,11 @@ spec:
   type: LoadBalancer
   loadBalancerIP: "52.179.186.63"
   selector:
+    environment: staging
     solr-cloud: staging-solr-mainsite
     technology: solr-cloud
   ports:
     - name: solr-http
       port: 8983
-      targetPort: 80
+      targetPort: 8983
       protocol: TCP
