@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - solr-system-namespace.yaml
   - flux-rbac.yaml
+  - solr-crds.yaml
   - solr-operator.yaml
 
 commonLabels:

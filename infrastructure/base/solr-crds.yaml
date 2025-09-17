@@ -4,15 +4,14 @@ metadata:
   name: install-solr-crds
   namespace: solr-system
   annotations:
-    argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-weight: "-1"
+    kustomize.toolkit.fluxcd.io/force: "true"
 spec:
   template:
     spec:
       serviceAccountName: solr-crd-installer
       containers:
       - name: install-crds
-        image: bitnami/kubectl:latest
+        image: bitnami/kubectl:1.28
         command:
         - /bin/sh
         - -c
