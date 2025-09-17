@@ -6,6 +6,7 @@ resources:
   - flux-rbac.yaml
   - solr-crds.yaml
   - solr-operator.yaml
+  - shared-zookeeper.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: solr-operator

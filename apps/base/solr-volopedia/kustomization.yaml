@@ -5,7 +5,6 @@ namespace: solr-volopedia
 
 resources:
   - namespace.yaml
-  - zookeeper.yaml
   - solrcloud.yaml
 
 commonLabels:

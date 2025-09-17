@@ -1,11 +1,11 @@
 apiVersion: zookeeper.pravega.io/v1beta1
 kind: ZookeeperCluster
 metadata:
-  name: volopedia-zookeeper
-  namespace: solr-volopedia
+  name: shared-zookeeper
+  namespace: solr-system
 spec:
   replicas: 3
-  
+
   # Storage configuration
   persistence:
     reclaimPolicy: Delete
@@ -16,7 +16,7 @@ spec:
       resources:
         requests:
           storage: 5Gi
-  
+
   # ZooKeeper configuration
   config:
     initLimit: 10
@@ -34,7 +34,7 @@ spec:
     autoPurgePurgeInterval: 1
     autoPurgeSnapRetainCount: 3
     quorumListenOnAllIPs: false
-  
+
   # Pod configuration
   pod:
     resources:
@@ -57,5 +57,5 @@ spec:
               - key: app
                 operator: In
                 values:
-                - volopedia-zookeeper
+                - shared-zookeeper
             topologyKey: kubernetes.io/hostname

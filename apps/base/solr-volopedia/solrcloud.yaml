@@ -12,10 +12,11 @@ spec:
   # Java memory configuration
   solrJavaMem: "-Xms1g -Xmx2g"
   
-  # ZooKeeper reference
+  # ZooKeeper reference - using the shared ZooKeeper cluster from infrastructure
   zookeeperRef:
     connectionInfo:
-      internalConnectionString: "staging-volopedia-zookeeper-0.staging-volopedia-zookeeper-headless.solr-volopedia.svc.cluster.local:2181,staging-volopedia-zookeeper-1.staging-volopedia-zookeeper-headless.solr-volopedia.svc.cluster.local:2181,staging-volopedia-zookeeper-2.staging-volopedia-zookeeper-headless.solr-volopedia.svc.cluster.local:2181"
+      internalConnectionString: "shared-zookeeper-0.shared-zookeeper-headless.solr-system.svc.cluster.local:2181,shared-zookeeper-1.shared-zookeeper-headless.solr-system.svc.cluster.local:2181,shared-zookeeper-2.shared-zookeeper-headless.solr-system.svc.cluster.local:2181"
+      chroot: "/volopedia"
   
   # Storage configuration
   dataStorage:
