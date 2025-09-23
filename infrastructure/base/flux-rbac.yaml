@@ -77,7 +77,7 @@ rules:
   verbs: ["*"]
 # Networking
 - apiGroups: ["networking.k8s.io"]
-  resources: ["ingresses"]
+  resources: ["ingresses", "ingressclasses"]
   verbs: ["*"]
 # Solr CRDs (for when the operator creates them)
 - apiGroups: ["solr.apache.org"]
