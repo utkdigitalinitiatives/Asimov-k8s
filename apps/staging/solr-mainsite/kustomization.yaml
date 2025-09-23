@@ -6,6 +6,7 @@ namespace: solr-mainsite
 resources:
   - ../../base/solr-mainsite
   - loadbalancer.yaml
+  - custom-ingress.yaml
 
 namePrefix: staging-
 
