@@ -61,7 +61,7 @@ rules:
   verbs: ["*"]
 # Core resources that operators need cluster-wide access to
 - apiGroups: [""]
-  resources: ["nodes", "namespaces", "pods", "services", "endpoints", "configmaps", "secrets", "persistentvolumeclaims", "events", "serviceaccounts"]
+  resources: ["nodes", "namespaces", "pods", "pods/status", "services", "endpoints", "configmaps", "secrets", "persistentvolumeclaims", "events", "serviceaccounts"]
   verbs: ["*"]
 # Apps resources
 - apiGroups: ["apps"]
