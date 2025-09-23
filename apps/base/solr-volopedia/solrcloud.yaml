@@ -43,6 +43,10 @@ spec:
   # Pod configuration
   customSolrKubeOptions:
     podOptions:
+      # Ensure pods run on user nodes, not system nodes
+      nodeSelector:
+        kubernetes.azure.com/mode: user
+
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -52,7 +56,7 @@ spec:
                 matchLabels:
                   solr-cloud: solr-volopedia
               topologyKey: kubernetes.io/hostname
-      
+
       # Environment variables
       envVars:
       - name: SOLR_LOG_LEVEL
