@@ -66,5 +66,6 @@ spec:
       method: Ingress
       domainName: "mainsite.local"
       hideCommon: false
+      ingressClassName: "nginx"
     commonServicePort: 8983
     kubeDomain: "cluster.local"
