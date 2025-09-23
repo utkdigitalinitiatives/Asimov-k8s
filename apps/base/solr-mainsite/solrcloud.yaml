@@ -64,7 +64,7 @@ spec:
   solrAddressability:
     external:
       method: Ingress
-      domainName: "mainsite.local"
+      domainName: "libutk.com"
       hideCommon: false
       ingressClassName: "nginx"
     commonServicePort: 8983
