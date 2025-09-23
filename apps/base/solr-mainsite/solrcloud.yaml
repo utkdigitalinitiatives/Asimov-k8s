@@ -66,6 +66,5 @@ spec:
       method: Ingress
       domainName: "libutk.com"
       hideCommon: false
-      ingressClassName: "nginx"
     commonServicePort: 8983
     kubeDomain: "cluster.local"
