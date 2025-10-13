@@ -7,8 +7,14 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
     nginx.ingress.kubernetes.io/rewrite-target: /
+    # Use Let's Encrypt production issuer for TLS certificate
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - solr-main.libutk.com
+    secretName: solr-main-tls
   rules:
   - host: solr-main.libutk.com
     http:

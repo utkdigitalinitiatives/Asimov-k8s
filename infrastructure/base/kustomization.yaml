@@ -8,6 +8,8 @@ resources:
   - solr-operator.yaml
   - shared-zookeeper.yaml
   - nginx-ingress.yaml
+  - cert-manager.yaml
+  - letsencrypt-issuer.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: solr-operator

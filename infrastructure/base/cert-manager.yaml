@@ -1,0 +1,75 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: jetstack
+  namespace: solr-system
+spec:
+  interval: 24h
+  url: https://charts.jetstack.io
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: solr-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: cert-manager
+      version: 'v1.16.x'
+      sourceRef:
+        kind: HelmRepository
+        name: jetstack
+        namespace: solr-system
+      interval: 12h
+  values:
+    # Install CRDs with the cert-manager Helm chart
+    installCRDs: true
+
+    # Global settings
+    global:
+      leaderElection:
+        namespace: solr-system
+
+    # Pod settings for AKS user nodes
+    nodeSelector:
+      kubernetes.azure.com/mode: user
+
+    webhook:
+      nodeSelector:
+        kubernetes.azure.com/mode: user
+
+    cainjector:
+      nodeSelector:
+        kubernetes.azure.com/mode: user
+
+    # Resource limits
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+
+    # Webhook resources
+    webhook:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+
+    # CA injector resources
+    cainjector:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
