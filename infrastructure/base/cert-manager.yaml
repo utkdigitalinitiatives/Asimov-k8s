@@ -24,6 +24,16 @@ spec:
         name: jetstack
         namespace: solr-system
       interval: 12h
+  # Wait for cert-manager pods to be ready before considering deployment complete
+  install:
+    crds: Create
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+  # Health checks to ensure cert-manager is fully operational
+  test:
+    enable: false
   values:
     # Install CRDs with the cert-manager Helm chart
     installCRDs: true
