@@ -37,15 +37,6 @@ spec:
     nodeSelector:
       kubernetes.azure.com/mode: user
 
-    webhook:
-      nodeSelector:
-        kubernetes.azure.com/mode: user
-
-    cainjector:
-      nodeSelector:
-        kubernetes.azure.com/mode: user
-
-    # Resource limits
     resources:
       requests:
         cpu: 10m
@@ -54,8 +45,10 @@ spec:
         cpu: 100m
         memory: 128Mi
 
-    # Webhook resources
+    # Webhook configuration
     webhook:
+      nodeSelector:
+        kubernetes.azure.com/mode: user
       resources:
         requests:
           cpu: 10m
@@ -64,8 +57,10 @@ spec:
           cpu: 100m
           memory: 128Mi
 
-    # CA injector resources
+    # CA injector configuration
     cainjector:
+      nodeSelector:
+        kubernetes.azure.com/mode: user
       resources:
         requests:
           cpu: 10m
