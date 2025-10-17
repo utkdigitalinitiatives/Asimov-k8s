@@ -52,7 +52,7 @@ spec:
           /opt/solr/bin/solr auth enable \
             --type basicAuth \
             --credentials "$USERNAME:$PASSWORD" \
-            --z "$ZK_HOST" \
+            --zk-host "$ZK_HOST" \
             --update-include-file-only false
 
           echo "Basic authentication configured successfully!"
