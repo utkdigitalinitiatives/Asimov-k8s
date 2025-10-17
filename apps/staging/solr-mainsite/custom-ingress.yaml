@@ -23,6 +23,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: staging-solr-mainsite-solrcloud-common
+            name: solr-mainsite-solrcloud-common
             port:
               number: 8983

@@ -17,6 +17,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: staging-solr-volopedia-solrcloud-common
+            name: solr-volopedia-solrcloud-common
             port:
               number: 8983
