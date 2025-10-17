@@ -1,0 +1,5 @@
+# Claude AI documentation - local only
+CLAUDE.md
+
+# Solr security - do not commit credentials
+.solr-admin-password

@@ -1,0 +1,90 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: solr-volopedia-security-init
+  namespace: solr-volopedia
+spec:
+  # This job runs once to initialize security.json in ZooKeeper
+  # It will be triggered after Solr pods are running
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app: solr-security-init
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: solr-volopedia-sa
+      restartPolicy: OnFailure
+
+      # Use init container to wait for Solr to be ready
+      initContainers:
+      - name: wait-for-solr
+        image: curlimages/curl:8.10.1
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for Solr to be ready..."
+          until curl -s http://staging-solr-volopedia-solrcloud-common.solr-volopedia.svc.cluster.local:8983/solr/admin/info/health | grep -q '"status":"OK"'; do
+            echo "Solr not ready yet, waiting 5 seconds..."
+            sleep 5
+          done
+          echo "Solr is ready!"
+
+      containers:
+      - name: setup-security
+        image: solr:9.8.1
+        command:
+        - bash
+        - -c
+        - |
+          set -e
+          echo "Configuring Solr basic authentication..."
+
+          # Read credentials from mounted secret
+          USERNAME=$(cat /etc/solr-auth/username)
+          PASSWORD=$(cat /etc/solr-auth/password)
+
+          # ZooKeeper connection string
+          ZK_HOST="shared-zookeeper-0.shared-zookeeper-headless.solr-system.svc.cluster.local:2181,shared-zookeeper-1.shared-zookeeper-headless.solr-system.svc.cluster.local:2181,shared-zookeeper-2.shared-zookeeper-headless.solr-system.svc.cluster.local:2181/volopedia"
+
+          # Use Solr's auth command to enable basic authentication
+          /opt/solr/bin/solr auth enable \
+            --type basicAuth \
+            --credentials "$USERNAME:$PASSWORD" \
+            --z "$ZK_HOST" \
+            --update-include-file-only false
+
+          echo "Basic authentication configured successfully!"
+
+          # Verify security.json was created
+          /opt/solr/server/scripts/cloud-scripts/zkcli.sh \
+            -zkhost "$ZK_HOST" \
+            -cmd get /security.json
+
+          echo "Security configuration verified in ZooKeeper"
+
+        volumeMounts:
+        # Mount credentials from Azure Key Vault via CSI driver
+        - name: auth-secrets
+          mountPath: /etc/solr-auth
+          readOnly: true
+
+        # Mount for CSI driver to sync secrets
+        - name: secrets-store-inline
+          mountPath: /mnt/secrets-store
+          readOnly: true
+
+      volumes:
+      # Secret created by SecretProviderClass
+      - name: auth-secrets
+        secret:
+          secretName: solr-auth-secret
+
+      # CSI driver volume to sync from Key Vault
+      - name: secrets-store-inline
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: solr-auth-provider

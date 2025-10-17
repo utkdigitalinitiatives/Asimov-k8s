@@ -5,7 +5,10 @@ namespace: solr-mainsite
 
 resources:
   - namespace.yaml
+  - serviceaccount.yaml
+  - secretproviderclass.yaml
   - solrcloud.yaml
+  - security-init-job.yaml
 
 commonLabels:
   app.kubernetes.io/name: solr-mainsite
