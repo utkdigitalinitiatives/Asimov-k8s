@@ -8,7 +8,5 @@ resources:
   - loadbalancer.yaml
   - custom-ingress.yaml
 
-namePrefix: staging-
-
 commonLabels:
   environment: staging

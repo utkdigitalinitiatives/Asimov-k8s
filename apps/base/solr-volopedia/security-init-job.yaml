@@ -25,7 +25,7 @@ spec:
         - -c
         - |
           echo "Waiting for Solr to be ready..."
-          until curl -s http://staging-solr-volopedia-solrcloud-common.solr-volopedia.svc.cluster.local:8983/solr/admin/info/health | grep -q '"status":"OK"'; do
+          until curl -s http://solr-volopedia-solrcloud-common.solr-volopedia.svc.cluster.local:8983/solr/admin/info/health | grep -q '"status":"OK"'; do
             echo "Solr not ready yet, waiting 5 seconds..."
             sleep 5
           done
