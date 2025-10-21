@@ -49,6 +49,7 @@ spec:
           ZK_HOST="shared-zookeeper-0.shared-zookeeper-headless.solr-system.svc.cluster.local:2181,shared-zookeeper-1.shared-zookeeper-headless.solr-system.svc.cluster.local:2181,shared-zookeeper-2.shared-zookeeper-headless.solr-system.svc.cluster.local:2181/mainsite"
 
           # Use Solr's auth command to enable basic authentication
+          # This creates the initial security.json with hashed credentials
           /opt/solr/bin/solr auth enable \
             --type basicAuth \
             --credentials "$USERNAME:$PASSWORD" \
@@ -57,7 +58,29 @@ spec:
 
           echo "Basic authentication configured successfully!"
 
-          # Verify security.json was created
+          # Now update security.json to allow unauthenticated health probes
+          # Set blockUnknown=false in the authorization section
+          echo "Updating security.json to allow health probe access..."
+
+          # Get current security.json
+          /opt/solr/server/scripts/cloud-scripts/zkcli.sh \
+            -zkhost "$ZK_HOST" \
+            -cmd get /security.json > /tmp/security.json.raw
+
+          # Extract just the JSON (skip ZooKeeper output)
+          sed -n '/^{/,/^}/p' /tmp/security.json.raw > /tmp/security.json
+
+          # Update blockUnknown to false using jq
+          jq '.authorization.blockUnknown = false' /tmp/security.json > /tmp/security-updated.json
+
+          # Upload updated security.json back to ZooKeeper
+          /opt/solr/server/scripts/cloud-scripts/zkcli.sh \
+            -zkhost "$ZK_HOST" \
+            -cmd put /security.json "$(cat /tmp/security-updated.json)"
+
+          echo "Security configuration updated - health probes now allowed!"
+
+          # Verify the updated configuration
           /opt/solr/server/scripts/cloud-scripts/zkcli.sh \
             -zkhost "$ZK_HOST" \
             -cmd get /security.json
