@@ -39,7 +39,12 @@ spec:
   
   # Solr configuration
   solrOpts: "-Dsolr.autoSoftCommit.maxTime=10000"
-  
+
+  # Security configuration - enables authenticated health probes
+  solrSecurity:
+    authenticationType: Basic
+    basicAuthSecret: solr-auth-secret
+
   # Pod configuration
   customSolrKubeOptions:
     podOptions:
