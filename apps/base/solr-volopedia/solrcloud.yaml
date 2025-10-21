@@ -40,10 +40,12 @@ spec:
   # Solr configuration
   solrOpts: "-Dsolr.autoSoftCommit.maxTime=10000"
 
-  # Security configuration - enables authenticated health probes
+  # Security configuration - operator will bootstrap security.json automatically
+  # Creates admin, solr, and k8s-oper users with random passwords
+  # Passwords stored in: solr-volopedia-solrcloud-security-bootstrap secret
   solrSecurity:
     authenticationType: Basic
-    basicAuthSecret: solr-auth-secret
+    probesRequireAuth: false  # Allow health probes without authentication
 
   # Pod configuration
   customSolrKubeOptions:
