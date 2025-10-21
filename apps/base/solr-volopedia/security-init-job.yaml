@@ -16,20 +16,8 @@ spec:
       serviceAccountName: solr-volopedia-sa
       restartPolicy: OnFailure
 
-      # Use init container to wait for Solr to be ready
-      initContainers:
-      - name: wait-for-solr
-        image: curlimages/curl:8.10.1
-        command:
-        - sh
-        - -c
-        - |
-          echo "Waiting for Solr to be ready..."
-          until curl -s http://solr-volopedia-solrcloud-common.solr-volopedia.svc.cluster.local:8983/solr/admin/info/health | grep -q '"status":"OK"'; do
-            echo "Solr not ready yet, waiting 5 seconds..."
-            sleep 5
-          done
-          echo "Solr is ready!"
+      # Note: Removed wait-for-solr init container to avoid circular dependency
+      # This job needs to update security.json even if Solr health probes are failing
 
       containers:
       - name: setup-security
