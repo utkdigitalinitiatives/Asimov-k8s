@@ -37,6 +37,9 @@ spec:
 
   # Pod configuration
   pod:
+    # Ensure pods run on user nodes, not system nodes
+    nodeSelector:
+      kubernetes.azure.com/mode: user
     resources:
       requests:
         memory: "512Mi"
