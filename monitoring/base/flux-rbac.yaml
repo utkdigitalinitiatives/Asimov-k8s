@@ -1,0 +1,81 @@
+---
+# Role for FluxCD to manage Helm releases in monitoring namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: monitoring
+  name: flux-applier-helm
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps", "services", "serviceaccounts", "pods", "persistentvolumeclaims", "events", "endpoints"]
+  verbs: ["*"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+  verbs: ["*"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["*"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles", "rolebindings"]
+  verbs: ["*"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["*"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["*"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["*"]
+---
+# RoleBinding to allow flux-applier from default namespace to manage monitoring namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flux-applier-cross-namespace
+  namespace: monitoring
+subjects:
+- kind: ServiceAccount
+  name: flux-applier
+  namespace: default
+roleRef:
+  kind: Role
+  name: flux-applier-helm
+  apiGroup: rbac.authorization.k8s.io
+---
+# ServiceAccount for flux-applier in monitoring namespace
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flux-applier
+  namespace: monitoring
+---
+# RoleBinding for flux-applier in monitoring namespace (for local operations)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flux-applier-monitoring
+  namespace: monitoring
+subjects:
+- kind: ServiceAccount
+  name: flux-applier
+  namespace: monitoring
+roleRef:
+  kind: Role
+  name: flux-applier-helm
+  apiGroup: rbac.authorization.k8s.io
+---
+# ClusterRoleBinding to give monitoring flux-applier cluster-admin permissions
+# (needed for kube-prometheus-stack to manage CRDs and cluster-wide resources)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flux-applier-monitoring-cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: flux-applier
+  namespace: monitoring
+roleRef:
+  kind: ClusterRole
+  name: flux-applier-cluster-admin
+  apiGroup: rbac.authorization.k8s.io

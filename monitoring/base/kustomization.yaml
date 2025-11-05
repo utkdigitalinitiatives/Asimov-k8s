@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - monitoring-namespace.yaml
+  - flux-rbac.yaml
   - kube-prometheus-stack.yaml
 
 commonLabels:
