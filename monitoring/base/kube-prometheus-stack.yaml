@@ -1,0 +1,197 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: prometheus-community
+  namespace: monitoring
+spec:
+  interval: 24h
+  url: https://prometheus-community.github.io/helm-charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: monitoring
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: '>=65.0.0 <66.0.0'
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: monitoring
+      interval: 12h
+  # Install CRDs with the chart
+  install:
+    crds: Create
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+  values:
+    # Prometheus configuration
+    prometheus:
+      prometheusSpec:
+        # Retention settings
+        retention: 30d
+        retentionSize: "45GB"
+
+        # Storage configuration for Azure Managed Disks
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: managed-csi
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: 50Gi
+
+        # Resource limits
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+
+        # Schedule on user nodes
+        nodeSelector:
+          kubernetes.azure.com/mode: user
+
+        # Enable ServiceMonitor discovery across all namespaces
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+
+        # Enable administrative APIs
+        enableAdminAPI: true
+
+    # Grafana configuration
+    grafana:
+      enabled: true
+
+      # Admin credentials (consider using secrets in production)
+      adminPassword: "admin"
+
+      # Persistent storage for dashboards
+      persistence:
+        enabled: true
+        storageClassName: managed-csi
+        accessModes: ["ReadWriteOnce"]
+        size: 10Gi
+
+      # Resource limits
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      # Schedule on user nodes
+      nodeSelector:
+        kubernetes.azure.com/mode: user
+
+      # Default dashboards
+      defaultDashboardsEnabled: true
+
+      # Grafana configuration
+      grafana.ini:
+        server:
+          root_url: "%(protocol)s://%(domain)s/grafana/"
+          serve_from_sub_path: true
+        analytics:
+          check_for_updates: true
+
+    # Alertmanager configuration
+    alertmanager:
+      alertmanagerSpec:
+        # Storage for Alertmanager
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: managed-csi
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: 5Gi
+
+        # Resource limits
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+        # Schedule on user nodes
+        nodeSelector:
+          kubernetes.azure.com/mode: user
+
+    # Prometheus Operator configuration
+    prometheusOperator:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+
+      nodeSelector:
+        kubernetes.azure.com/mode: user
+
+    # Node exporter - runs on all nodes as DaemonSet
+    nodeExporter:
+      enabled: true
+
+    # Kube-state-metrics configuration
+    kube-state-metrics:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+
+      nodeSelector:
+        kubernetes.azure.com/mode: user
+
+    # Default service monitors (enabled by default)
+    defaultRules:
+      create: true
+      rules:
+        alertmanager: true
+        etcd: true
+        configReloaders: true
+        general: true
+        k8s: true
+        kubeApiserverAvailability: true
+        kubeApiserverBurnrate: true
+        kubeApiserverHistogram: true
+        kubeApiserverSlos: true
+        kubeControllerManager: true
+        kubelet: true
+        kubeProxy: true
+        kubePrometheusGeneral: true
+        kubePrometheusNodeRecording: true
+        kubernetesApps: true
+        kubernetesResources: true
+        kubernetesStorage: true
+        kubernetesSystem: true
+        kubeSchedulerAlerting: true
+        kubeSchedulerRecording: true
+        kubeStateMetrics: true
+        network: true
+        node: true
+        nodeExporterAlerting: true
+        nodeExporterRecording: true
+        prometheus: true
+        prometheusOperator: true
