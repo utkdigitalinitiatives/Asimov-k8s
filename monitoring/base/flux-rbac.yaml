@@ -27,6 +27,10 @@ rules:
 - apiGroups: ["networking.k8s.io"]
   resources: ["ingresses"]
   verbs: ["*"]
+# Prometheus Operator CRDs
+- apiGroups: ["monitoring.coreos.com"]
+  resources: ["alertmanagers", "alertmanagerconfigs", "prometheuses", "prometheusrules", "servicemonitors", "podmonitors", "thanosrulers", "probes"]
+  verbs: ["*"]
 ---
 # RoleBinding to allow flux-applier from default namespace to manage monitoring namespace
 apiVersion: rbac.authorization.k8s.io/v1
