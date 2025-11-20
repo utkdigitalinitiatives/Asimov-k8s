@@ -36,8 +36,11 @@ spec:
       web:
         port: 80
         exposedPort: 80
-        redirectTo:
-          port: websecure  # HTTP -> HTTPS redirect
+        redirections:
+          entryPoint:
+            to: websecure
+            scheme: https
+            permanent: true
       websecure:
         port: 443
         exposedPort: 443
