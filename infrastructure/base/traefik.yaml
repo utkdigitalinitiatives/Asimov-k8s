@@ -31,19 +31,19 @@ spec:
       annotations:
         service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/ping"
 
-    # Ports configuration
+    # Ports configuration (using non-privileged ports internally)
     ports:
       web:
-        port: 80
-        exposedPort: 80
+        port: 8000  # Internal container port (non-privileged)
+        exposedPort: 80  # External LoadBalancer port
         redirections:
           entryPoint:
             to: websecure
             scheme: https
             permanent: true
       websecure:
-        port: 443
-        exposedPort: 443
+        port: 8443  # Internal container port (non-privileged)
+        exposedPort: 443  # External LoadBalancer port
         http3:
           enabled: false
         tls:
@@ -109,8 +109,6 @@ spec:
       capabilities:
         drop:
           - ALL
-        add:
-          - NET_BIND_SERVICE  # Required for binding to ports 80 and 443
       readOnlyRootFilesystem: true
       runAsNonRoot: true
       runAsUser: 65532
