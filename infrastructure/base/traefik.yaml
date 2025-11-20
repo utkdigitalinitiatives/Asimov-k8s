@@ -76,9 +76,9 @@ spec:
         service:
           enabled: true
         serviceMonitor:
-          enabled: true
-          namespace: monitoring
-          jobLabel: traefik
+          enabled: false  # TODO: Enable after adding RBAC permissions for monitoring namespace
+          # namespace: monitoring
+          # jobLabel: traefik
 
     # Logs
     logs:
