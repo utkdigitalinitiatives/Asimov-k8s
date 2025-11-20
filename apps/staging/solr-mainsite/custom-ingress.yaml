@@ -5,12 +5,12 @@ metadata:
   name: solr-main-custom
   namespace: solr-mainsite
   annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    nginx.ingress.kubernetes.io/rewrite-target: /
     # Use Let's Encrypt production issuer for TLS certificate
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Traefik annotations (Traefik auto-detects backend protocol)
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
   - hosts:
     - solr-main.libutk.com

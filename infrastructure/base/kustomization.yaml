@@ -7,7 +7,7 @@ resources:
   - solr-crds.yaml
   - solr-operator.yaml
   - shared-zookeeper.yaml
-  - nginx-ingress.yaml
+  - traefik.yaml
   - cert-manager.yaml
 
 commonLabels:

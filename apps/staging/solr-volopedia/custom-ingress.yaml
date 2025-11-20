@@ -5,10 +5,16 @@ metadata:
   name: solr-volopedia-custom
   namespace: solr-volopedia
   annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Use Let's Encrypt production issuer for TLS certificate
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Traefik annotations (Traefik auto-detects backend protocol)
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - solr-volopedia.libutk.com
+    secretName: solr-volopedia-tls
   rules:
   - host: solr-volopedia.libutk.com
     http:
