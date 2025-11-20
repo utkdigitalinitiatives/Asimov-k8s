@@ -109,6 +109,8 @@ spec:
       capabilities:
         drop:
           - ALL
+        add:
+          - NET_BIND_SERVICE  # Required for binding to ports 80 and 443
       readOnlyRootFilesystem: true
       runAsNonRoot: true
       runAsUser: 65532
