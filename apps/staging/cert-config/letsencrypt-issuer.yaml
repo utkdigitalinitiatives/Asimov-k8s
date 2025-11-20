@@ -16,11 +16,11 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-prod
 
-    # HTTP-01 challenge solver using nginx ingress
+    # HTTP-01 challenge solver using traefik ingress
     solvers:
     - http01:
         ingress:
-          ingressClassName: nginx
+          ingressClassName: traefik
 ---
 # Staging Let's Encrypt ClusterIssuer (for testing)
 apiVersion: cert-manager.io/v1
@@ -39,8 +39,8 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-staging
 
-    # HTTP-01 challenge solver using nginx ingress
+    # HTTP-01 challenge solver using traefik ingress
     solvers:
     - http01:
         ingress:
-          ingressClassName: nginx
+          ingressClassName: traefik
