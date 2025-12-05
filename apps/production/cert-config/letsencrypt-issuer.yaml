@@ -1,0 +1,46 @@
+---
+# Production Let's Encrypt ClusterIssuer
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # Let's Encrypt production server
+    server: https://acme-v02.api.letsencrypt.org/directory
+
+    # Email for certificate expiration notifications
+    email: di_notifications@utk.edu
+
+    # Secret to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod
+
+    # HTTP-01 challenge solver using traefik ingress
+    solvers:
+    - http01:
+        ingress:
+          ingressClassName: traefik
+---
+# Staging Let's Encrypt ClusterIssuer (for testing)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    # Let's Encrypt staging server (higher rate limits, for testing)
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+
+    # Email for certificate expiration notifications
+    email: di_notifications@utk.edu
+
+    # Secret to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-staging
+
+    # HTTP-01 challenge solver using traefik ingress
+    solvers:
+    - http01:
+        ingress:
+          ingressClassName: traefik

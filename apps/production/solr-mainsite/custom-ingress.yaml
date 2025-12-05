@@ -2,27 +2,25 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: solr-volopedia-custom
-  namespace: solr-volopedia
+  name: solr-mainsite-prod
+  namespace: solr-mainsite
   annotations:
-    # Use Let's Encrypt production issuer for TLS certificate
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    # Traefik annotations (Traefik auto-detects backend protocol)
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   ingressClassName: traefik
   tls:
   - hosts:
-    - solr-volopedia.libutk.com
-    secretName: solr-volopedia-tls
+    - mainsite.libsolr.lib.utk.edu
+    secretName: solr-mainsite-prod-tls
   rules:
-  - host: solr-volopedia.libutk.com
+  - host: mainsite.libsolr.lib.utk.edu
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: solr-volopedia-solrcloud-common
+            name: solr-mainsite-solrcloud-common
             port:
               number: 8983

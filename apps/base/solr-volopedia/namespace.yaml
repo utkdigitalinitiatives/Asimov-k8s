@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: solr-volopedia
-  labels:
-    name: solr-volopedia
-    app.kubernetes.io/name: solr-volopedia
-    app.kubernetes.io/component: solr-namespace

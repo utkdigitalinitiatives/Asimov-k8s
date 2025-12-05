@@ -2,27 +2,25 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: solr-main-custom
-  namespace: solr-mainsite
+  name: solr-staging-custom
+  namespace: solr-mainsite-staging
   annotations:
-    # Use Let's Encrypt production issuer for TLS certificate
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    # Traefik annotations (Traefik auto-detects backend protocol)
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   ingressClassName: traefik
   tls:
   - hosts:
-    - solr-main.libutk.com
-    secretName: solr-main-tls
+    - staging.libsolr.lib.utk.edu
+    secretName: solr-staging-tls
   rules:
-  - host: solr-main.libutk.com
+  - host: staging.libsolr.lib.utk.edu
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: solr-mainsite-solrcloud-common
+            name: solr-mainsite-staging-solrcloud-common
             port:
               number: 8983

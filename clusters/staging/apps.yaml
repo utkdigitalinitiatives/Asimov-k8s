@@ -15,15 +15,7 @@ spec:
   dependsOn:
     - name: infrastructure
   healthChecks:
-    - apiVersion: zookeeper.pravega.io/v1beta1
-      kind: ZookeeperCluster
-      name: staging-volopedia-zookeeper
-      namespace: solr-volopedia
     - apiVersion: solr.apache.org/v1beta1
       kind: SolrCloud
-      name: staging-solr-volopedia
-      namespace: solr-volopedia
-    - apiVersion: solr.apache.org/v1beta1
-      kind: SolrCloud
-      name: staging-solr-mainsite
-      namespace: solr-mainsite
+      name: solr-mainsite-staging
+      namespace: solr-mainsite-staging

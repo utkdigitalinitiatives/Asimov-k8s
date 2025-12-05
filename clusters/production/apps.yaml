@@ -14,3 +14,8 @@ spec:
   timeout: 15m
   dependsOn:
     - name: infrastructure
+  healthChecks:
+    - apiVersion: solr.apache.org/v1beta1
+      kind: SolrCloud
+      name: solr-mainsite
+      namespace: solr-mainsite

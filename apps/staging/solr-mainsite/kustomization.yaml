@@ -1,11 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: solr-mainsite
+namespace: solr-mainsite-staging
 
 resources:
-  - ../../base/solr-mainsite
-  - loadbalancer.yaml
+  - ../../base/solr-mainsite-staging
   - custom-ingress.yaml
 
 commonLabels:

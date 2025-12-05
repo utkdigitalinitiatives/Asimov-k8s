@@ -75,7 +75,7 @@ spec:
   solrAddressability:
     external:
       method: Ingress
-      domainName: "libutk.com"
+      domainName: "libsolr.lib.utk.edu"
       hideCommon: false
     commonServicePort: 8983
     kubeDomain: "cluster.local"

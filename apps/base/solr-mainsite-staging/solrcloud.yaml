@@ -1,23 +1,23 @@
 apiVersion: solr.apache.org/v1beta1
 kind: SolrCloud
 metadata:
-  name: solr-volopedia
-  namespace: solr-volopedia
+  name: solr-mainsite-staging
+  namespace: solr-mainsite-staging
 spec:
   # Solr version and replicas
   replicas: 3
   solrImage:
     tag: "9.8.1"
-  
+
   # Java memory configuration
   solrJavaMem: "-Xms1g -Xmx2g"
-  
+
   # ZooKeeper reference - using the shared ZooKeeper cluster from infrastructure
   zookeeperRef:
     connectionInfo:
       internalConnectionString: "shared-zookeeper-0.shared-zookeeper-headless.solr-system.svc.cluster.local:2181,shared-zookeeper-1.shared-zookeeper-headless.solr-system.svc.cluster.local:2181,shared-zookeeper-2.shared-zookeeper-headless.solr-system.svc.cluster.local:2181"
-      chroot: "/volopedia"
-  
+      chroot: "/mainsite-staging"
+
   # Storage configuration
   dataStorage:
     persistent:
@@ -30,19 +30,19 @@ spec:
           resources:
             requests:
               storage: 20Gi
-  
+
   # Update strategy
   updateStrategy:
     method: "Managed"
     managed:
       maxPodsUnavailable: 1
-  
+
   # Solr configuration
   solrOpts: "-Dsolr.autoSoftCommit.maxTime=10000"
 
   # Security configuration - operator will bootstrap security.json automatically
   # Creates admin, solr, and k8s-oper users with random passwords
-  # Passwords stored in: solr-volopedia-solrcloud-security-bootstrap secret
+  # Passwords stored in: solr-mainsite-staging-solrcloud-security-bootstrap secret
   solrSecurity:
     authenticationType: Basic
     probesRequireAuth: false  # Allow health probes without authentication
@@ -61,7 +61,7 @@ spec:
             podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  solr-cloud: solr-volopedia
+                  solr-cloud: solr-mainsite-staging
               topologyKey: kubernetes.io/hostname
 
       # Environment variables
@@ -70,12 +70,12 @@ spec:
         value: "INFO"
       - name: GC_TUNE
         value: "-XX:+UseG1GC -XX:+UseStringDeduplication"
-  
+
   # Service configuration for external access
   solrAddressability:
     external:
       method: Ingress
-      domainName: "volopedia.local"
+      domainName: "libsolr.lib.utk.edu"
       hideCommon: false
     commonServicePort: 8983
     kubeDomain: "cluster.local"
