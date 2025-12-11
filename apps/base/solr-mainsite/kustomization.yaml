@@ -5,6 +5,7 @@ namespace: solr-mainsite
 
 resources:
   - namespace.yaml
+  - secret-provider.yaml
   - solrcloud.yaml
 
 commonLabels:
