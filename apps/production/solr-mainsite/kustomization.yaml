@@ -9,3 +9,12 @@ resources:
 
 commonLabels:
   environment: production
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/dataStorage/persistent/reclaimPolicy
+        value: Retain
+    target:
+      kind: SolrCloud
+      name: solr-mainsite
