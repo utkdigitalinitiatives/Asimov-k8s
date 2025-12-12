@@ -40,16 +40,11 @@ spec:
   # Solr configuration
   solrOpts: "-Dsolr.autoSoftCommit.maxTime=10000"
 
-  # Security configuration - using pre-created security.json from Azure Key Vault
-  # Credentials stored in: Azure Key Vault (kv-asimov) -> solr-mainsite-security-json
-  # Synced to K8s secret via SecretProviderClass: solr-mainsite-security-bootstrap
-  # Users: admin (SolrAdmin2025), k8s-oper (SolrK8sOper2025), solr (SolrUser2025)
+  # Security configuration - operator will bootstrap security.json automatically
+  # Creates admin, solr, and k8s-oper users with random passwords
+  # Passwords stored in: solr-mainsite-solrcloud-security-bootstrap secret
   solrSecurity:
     authenticationType: Basic
-    basicAuthSecret: solr-mainsite-basic-auth
-    bootstrapSecurityJson:
-      name: solr-mainsite-security-bootstrap
-      key: security.json
     probesRequireAuth: false  # Allow health probes without authentication
 
   # Pod configuration
