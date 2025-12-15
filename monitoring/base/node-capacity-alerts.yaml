@@ -1,0 +1,99 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: node-capacity-alerts
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: kube-prometheus-stack
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: node-capacity
+      rules:
+        # CPU Request Alerts
+        - alert: NodeCPURequestsHigh
+          expr: |
+            (
+              sum by (node) (kube_pod_container_resource_requests{resource="cpu", node!=""})
+              /
+              sum by (node) (kube_node_status_allocatable{resource="cpu"})
+            ) * 100 > 85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.node }} CPU requests above 85%"
+            description: "Node {{ $labels.node }} has {{ printf \"%.1f\" $value }}% of CPU capacity committed via resource requests. New pods may fail to schedule."
+
+        - alert: NodeCPURequestsCritical
+          expr: |
+            (
+              sum by (node) (kube_pod_container_resource_requests{resource="cpu", node!=""})
+              /
+              sum by (node) (kube_node_status_allocatable{resource="cpu"})
+            ) * 100 > 95
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} CPU requests above 95%"
+            description: "Node {{ $labels.node }} has {{ printf \"%.1f\" $value }}% of CPU capacity committed via resource requests. Pod scheduling will likely fail."
+
+        # Memory Request Alerts
+        - alert: NodeMemoryRequestsHigh
+          expr: |
+            (
+              sum by (node) (kube_pod_container_resource_requests{resource="memory", node!=""})
+              /
+              sum by (node) (kube_node_status_allocatable{resource="memory"})
+            ) * 100 > 85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.node }} memory requests above 85%"
+            description: "Node {{ $labels.node }} has {{ printf \"%.1f\" $value }}% of memory capacity committed via resource requests. New pods may fail to schedule."
+
+        - alert: NodeMemoryRequestsCritical
+          expr: |
+            (
+              sum by (node) (kube_pod_container_resource_requests{resource="memory", node!=""})
+              /
+              sum by (node) (kube_node_status_allocatable{resource="memory"})
+            ) * 100 > 95
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} memory requests above 95%"
+            description: "Node {{ $labels.node }} has {{ printf \"%.1f\" $value }}% of memory capacity committed via resource requests. Pod scheduling will likely fail."
+
+        # Cluster-wide Alerts
+        - alert: ClusterCPURequestsHigh
+          expr: |
+            (
+              sum(kube_pod_container_resource_requests{resource="cpu", node!=""})
+              /
+              sum(kube_node_status_allocatable{resource="cpu"})
+            ) * 100 > 80
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Cluster CPU requests above 80%"
+            description: "The cluster has {{ printf \"%.1f\" $value }}% of total CPU capacity committed via resource requests. Consider adding nodes or reducing requests."
+
+        - alert: ClusterMemoryRequestsHigh
+          expr: |
+            (
+              sum(kube_pod_container_resource_requests{resource="memory", node!=""})
+              /
+              sum(kube_node_status_allocatable{resource="memory"})
+            ) * 100 > 80
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Cluster memory requests above 80%"
+            description: "The cluster has {{ printf \"%.1f\" $value }}% of total memory capacity committed via resource requests. Consider adding nodes or reducing requests."

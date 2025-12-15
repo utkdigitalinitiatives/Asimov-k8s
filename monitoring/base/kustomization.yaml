@@ -5,6 +5,8 @@ resources:
   - monitoring-namespace.yaml
   - flux-rbac.yaml
   - kube-prometheus-stack.yaml
+  - node-capacity-dashboard.yaml
+  - node-capacity-alerts.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: kube-prometheus-stack
