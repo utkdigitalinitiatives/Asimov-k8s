@@ -8,3 +8,4 @@ resources:
   - rbac.yaml
   - helmrepository.yaml
   - helmrelease.yaml
+  - clustersecretstore.yaml

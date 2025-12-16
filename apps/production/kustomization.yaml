@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - cert-config
   - solr-mainsite
+  - redis-mainsite

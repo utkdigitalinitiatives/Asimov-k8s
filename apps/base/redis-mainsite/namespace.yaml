@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redis-mainsite
+  labels:
+    name: redis-mainsite
+    app.kubernetes.io/name: redis-mainsite
+    app.kubernetes.io/component: redis-namespace

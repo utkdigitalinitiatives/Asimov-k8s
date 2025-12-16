@@ -1,0 +1,35 @@
+---
+# Headless service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-mainsite-headless
+  namespace: redis-mainsite
+  labels:
+    app.kubernetes.io/name: redis-mainsite
+spec:
+  clusterIP: None
+  ports:
+    - port: 6379
+      name: redis
+  selector:
+    app.kubernetes.io/name: redis-mainsite
+---
+# Internal LoadBalancer for VNet-peered access
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-mainsite
+  namespace: redis-mainsite
+  labels:
+    app.kubernetes.io/name: redis-mainsite
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  selector:
+    app.kubernetes.io/name: redis-mainsite
