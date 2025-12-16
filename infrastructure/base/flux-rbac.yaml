@@ -87,6 +87,13 @@ rules:
 - apiGroups: ["zookeeper.pravega.io"]
   resources: ["*"]
   verbs: ["*"]
+# External Secrets CRDs
+- apiGroups: ["external-secrets.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["generators.external-secrets.io"]
+  resources: ["*"]
+  verbs: ["*"]
 # Coordination (for leader election)
 - apiGroups: ["coordination.k8s.io"]
   resources: ["leases"]

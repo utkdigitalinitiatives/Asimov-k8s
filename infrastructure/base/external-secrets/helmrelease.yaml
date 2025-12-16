@@ -1,0 +1,25 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-secrets
+  namespace: external-secrets
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: external-secrets
+      version: "0.12.x"
+      sourceRef:
+        kind: HelmRepository
+        name: external-secrets
+        namespace: external-secrets
+  values:
+    serviceAccount:
+      create: true
+      name: external-secrets
+      annotations:
+        azure.workload.identity/client-id: "4b3be16b-4a1d-4108-bdf5-64525c193d33"
+    podLabels:
+      azure.workload.identity/use: "true"
+    nodeSelector:
+      kubernetes.azure.com/mode: user
