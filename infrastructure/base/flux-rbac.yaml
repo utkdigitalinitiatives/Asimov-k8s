@@ -57,7 +57,7 @@ rules:
   verbs: ["*"]
 # RBAC management (CRITICAL: needed for operators to create their own RBAC)
 - apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["clusterroles", "clusterrolebindings"]
+  resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
   verbs: ["*"]
 # Core resources that operators need cluster-wide access to
 - apiGroups: [""]
