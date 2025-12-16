@@ -5,18 +5,15 @@ metadata:
   name: flux-applier
   namespace: external-secrets
 ---
+# ClusterRoleBinding for cluster-wide permissions (CRDs, etc.)
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
-  name: flux-applier-helm
-  namespace: external-secrets
+  name: flux-applier-external-secrets
 subjects:
 - kind: ServiceAccount
   name: flux-applier
   namespace: external-secrets
-- kind: ServiceAccount
-  name: flux-applier
-  namespace: default
 roleRef:
   kind: ClusterRole
   name: flux-applier-cluster-admin
