@@ -13,6 +13,13 @@ commonLabels:
 patches:
   - patch: |-
       - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: SolrCloud
+      name: solr-mainsite
+  - patch: |-
+      - op: replace
         path: /spec/dataStorage/persistent/reclaimPolicy
         value: Retain
     target:
