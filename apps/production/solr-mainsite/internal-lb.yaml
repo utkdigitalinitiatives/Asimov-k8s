@@ -1,0 +1,29 @@
+---
+# Internal Azure Load Balancer for VNet-peered access from the Drupal VMSS.
+# - Pinned IP must live inside the AKS VNet address space (10.224.0.0/12)
+#   and is also referenced by lib-main-infra (var.solr_internal_lb_ip ->
+#   private DNS A record solr.lib-main.internal). Keep both in sync.
+# - Public access remains via the existing Traefik Ingress (custom-ingress.yaml).
+# - Selector matches the SolrCloud operator's pod labels, so traffic load-
+#   balances across all Solr replicas.
+apiVersion: v1
+kind: Service
+metadata:
+  name: solr-mainsite-internal-lb
+  namespace: solr-mainsite
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-ipv4: "10.224.255.10"
+    # Solr returns 200 from /solr/admin/info/system without auth thanks to
+    # probesRequireAuth: false on the SolrCloud spec.
+    service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/solr/admin/info/system"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8983
+      targetPort: 8983
+      protocol: TCP
+      name: solr
+  selector:
+    solr-cloud: solr-mainsite
+    technology: solr-cloud
