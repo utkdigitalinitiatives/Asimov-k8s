@@ -1,0 +1,180 @@
+---
+# RBAC for the security-init Job. Lets it create/update the bootstrap
+# Secret that the Solr Operator reads via SolrCloud.spec.solrSecurity.bootstrapSecurityJson.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: solr-mainsite-security-init
+  namespace: solr-mainsite
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: solr-mainsite-security-init
+  namespace: solr-mainsite
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "create", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: solr-mainsite-security-init
+  namespace: solr-mainsite
+subjects:
+  - kind: ServiceAccount
+    name: solr-mainsite-security-init
+    namespace: solr-mainsite
+roleRef:
+  kind: Role
+  name: solr-mainsite-security-init
+  apiGroup: rbac.authorization.k8s.io
+---
+# Generates Solr's security.json with hashes computed from the cleartext
+# passwords ESO synced from Key Vault. Writes the result into the
+# solr-mainsite-security-bootstrap Secret, which the SolrCloud spec
+# references via bootstrapSecurityJson — the Solr Operator then uploads
+# security.json to ZooKeeper on first cluster bootstrap.
+#
+# Computing hashes in-cluster (rather than statically committing them)
+# means the cleartext never leaves the cluster boundary and a password
+# rotation is just: re-run this Job + delete /security.json from ZK.
+#
+# Authorization rules:
+#   - admin role: full cluster access
+#   - users role: read-only
+#   - operator role (k8s-oper): collection management, metrics, ping,
+#     replica balancing — everything the Solr Operator needs to manage
+#     the cluster, no more
+#   - drupal-mainsite role: scoped to mainsite_* collections only;
+#     attempting to LIST collections or touch other sites returns 403
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: solr-mainsite-security-init
+  namespace: solr-mainsite
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 6
+  template:
+    spec:
+      serviceAccountName: solr-mainsite-security-init
+      restartPolicy: OnFailure
+      nodeSelector:
+        kubernetes.azure.com/mode: user
+      volumes:
+        - name: passwords
+          secret:
+            secretName: solr-mainsite-user-passwords
+        - name: shared
+          emptyDir: {}
+      initContainers:
+        - name: build-security-json
+          image: python:3.12-alpine
+          command:
+            - python3
+            - -c
+            - |
+              import base64, hashlib, json, os, secrets
+
+              def solr_hash(password: str) -> str:
+                  # Solr 9.x basic-auth: base64(sha256(sha256(salt + pw))) + " " + base64(salt)
+                  salt = secrets.token_bytes(32)
+                  h1 = hashlib.sha256(salt + password.encode("utf-8")).digest()
+                  h2 = hashlib.sha256(h1).digest()
+                  return f"{base64.b64encode(h2).decode()} {base64.b64encode(salt).decode()}"
+
+              def read(name: str) -> str:
+                  with open(f"/var/run/passwords/{name}", "r") as f:
+                      return f.read().strip()
+
+              users = {
+                  "admin":           read("admin-password"),
+                  "solr":            read("solr-password"),
+                  "k8s-oper":        read("operator-password"),
+                  "drupal-mainsite": read("drupal-mainsite-password"),
+              }
+
+              security = {
+                  "authentication": {
+                      "blockUnknown": True,
+                      "class": "solr.BasicAuthPlugin",
+                      "credentials": {u: solr_hash(p) for u, p in users.items()},
+                      "realm": "solr",
+                      "forwardCredentials": False,
+                  },
+                  "authorization": {
+                      "class": "solr.RuleBasedAuthorizationPlugin",
+                      "user-role": {
+                          "admin":           ["admin", "users"],
+                          "solr":            ["users"],
+                          "k8s-oper":        ["operator"],
+                          "drupal-mainsite": ["drupal-mainsite"],
+                      },
+                      "permissions": [
+                          # Drupal: scoped to mainsite_* collections only.
+                          {"name": "drupal-mainsite-read",
+                           "collection": "mainsite_*",
+                           "path": "/*",
+                           "method": ["GET", "POST"],
+                           "role": ["drupal-mainsite", "admin"]},
+                          # Operator: cluster management surface only.
+                          {"name": "operator-collections",
+                           "collection": None,
+                           "path": "/admin/collections",
+                           "role": ["operator", "admin"]},
+                          {"name": "operator-metrics",
+                           "collection": None,
+                           "path": "/admin/metrics",
+                           "role": ["operator", "admin", "users"]},
+                          {"name": "operator-zookeeper-status",
+                           "collection": None,
+                           "path": "/admin/zookeeper/status",
+                           "role": ["operator", "admin"]},
+                          {"name": "operator-replicas-balance",
+                           "collection": None,
+                           "path": "/admin/replicas/balance",
+                           "role": ["operator", "admin"]},
+                          {"name": "operator-ping",
+                           "collection": None,
+                           "path": "/admin/ping",
+                           "role": ["operator", "admin"]},
+                          # Built-in permission names: Solr applies their
+                          # predefined path/method rules when referenced.
+                          {"name": "collection-admin-edit", "role": ["operator", "admin"]},
+                          {"name": "security-edit",         "role": "admin"},
+                          {"name": "security-read",         "role": "admin"},
+                          {"name": "read",                  "role": ["users", "admin"]},
+                          {"name": "all",                   "role": "admin"},
+                      ],
+                  },
+              }
+
+              os.makedirs("/shared", exist_ok=True)
+              with open("/shared/security.json", "w") as f:
+                  json.dump(security, f, indent=2)
+              print("security.json written")
+          volumeMounts:
+            - name: passwords
+              mountPath: /var/run/passwords
+              readOnly: true
+            - name: shared
+              mountPath: /shared
+      containers:
+        - name: apply-secret
+          image: bitnami/kubectl:1.31
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              kubectl create secret generic solr-mainsite-security-bootstrap \
+                --namespace=solr-mainsite \
+                --from-file=security.json=/shared/security.json \
+                --dry-run=client -o yaml | kubectl apply -f -
+              echo "solr-mainsite-security-bootstrap applied"
+          volumeMounts:
+            - name: shared
+              mountPath: /shared
+              readOnly: true

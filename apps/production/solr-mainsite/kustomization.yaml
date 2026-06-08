@@ -6,6 +6,9 @@ namespace: solr-mainsite
 resources:
   - ../../base/solr-mainsite
   - custom-ingress.yaml
+  - external-secret.yaml
+  - internal-lb.yaml
+  - security-init-job.yaml
 
 commonLabels:
   environment: production
@@ -22,6 +25,24 @@ patches:
       - op: replace
         path: /spec/dataStorage/persistent/reclaimPolicy
         value: Retain
+    target:
+      kind: SolrCloud
+      name: solr-mainsite
+  # Replace operator-managed security with TF-owned passwords. The
+  # operator authenticates as k8s-oper using solr-mainsite-operator-auth
+  # (synced from KV by ESO). bootstrapSecurityJson points at the Secret
+  # built by solr-mainsite-security-init Job. probesRequireAuth stays
+  # false so /admin/info/system works for the internal LB health probe.
+  - patch: |-
+      - op: replace
+        path: /spec/solrSecurity
+        value:
+          authenticationType: Basic
+          basicAuthSecret: solr-mainsite-operator-auth
+          bootstrapSecurityJson:
+            name: solr-mainsite-security-bootstrap
+            key: security.json
+          probesRequireAuth: false
     target:
       kind: SolrCloud
       name: solr-mainsite
