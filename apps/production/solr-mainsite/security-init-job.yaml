@@ -47,8 +47,9 @@ roleRef:
 #   - operator role (k8s-oper): collection management, metrics, ping,
 #     replica balancing — everything the Solr Operator needs to manage
 #     the cluster, no more
-#   - drupal-mainsite role: scoped to mainsite_* collections only;
-#     attempting to LIST collections or touch other sites returns 403
+#   - drupal-mainsite-prod / drupal-mainsite-dev roles: each scoped to its
+#     own collection (mainsite_prod / mainsite_dev) by exact name, so a dev
+#     credential cannot read or write the production index, and vice versa
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -90,10 +91,11 @@ spec:
                       return f.read().strip()
 
               users = {
-                  "admin":           read("admin-password"),
-                  "solr":            read("solr-password"),
-                  "k8s-oper":        read("operator-password"),
-                  "drupal-mainsite": read("drupal-mainsite-password"),
+                  "admin":                read("admin-password"),
+                  "solr":                 read("solr-password"),
+                  "k8s-oper":             read("operator-password"),
+                  "drupal-mainsite-prod": read("drupal-mainsite-prod-password"),
+                  "drupal-mainsite-dev":  read("drupal-mainsite-dev-password"),
               }
 
               security = {
@@ -107,18 +109,26 @@ spec:
                   "authorization": {
                       "class": "solr.RuleBasedAuthorizationPlugin",
                       "user-role": {
-                          "admin":           ["admin", "users"],
-                          "solr":            ["users"],
-                          "k8s-oper":        ["operator"],
-                          "drupal-mainsite": ["drupal-mainsite"],
+                          "admin":                ["admin", "users"],
+                          "solr":                 ["users"],
+                          "k8s-oper":             ["operator"],
+                          "drupal-mainsite-prod": ["drupal-mainsite-prod"],
+                          "drupal-mainsite-dev":  ["drupal-mainsite-dev"],
                       },
                       "permissions": [
-                          # Drupal: scoped to mainsite_* collections only.
-                          {"name": "drupal-mainsite-read",
-                           "collection": "mainsite_*",
+                          # Drupal: each site scoped to its OWN collection by
+                          # exact name (not a glob) so a dev credential cannot
+                          # reach the production index, and vice versa.
+                          {"name": "drupal-mainsite-prod-read",
+                           "collection": "mainsite_prod",
                            "path": "/*",
                            "method": ["GET", "POST"],
-                           "role": ["drupal-mainsite", "admin"]},
+                           "role": ["drupal-mainsite-prod", "admin"]},
+                          {"name": "drupal-mainsite-dev-read",
+                           "collection": "mainsite_dev",
+                           "path": "/*",
+                           "method": ["GET", "POST"],
+                           "role": ["drupal-mainsite-dev", "admin"]},
                           # Operator: cluster management surface only.
                           {"name": "operator-collections",
                            "collection": None,
