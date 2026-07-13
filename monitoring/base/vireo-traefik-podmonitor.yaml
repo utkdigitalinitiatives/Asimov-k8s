@@ -1,0 +1,36 @@
+---
+# Scrape the Vireo ETD deployment's dedicated Traefik instances.
+#
+# The Vireo app itself (vireo-service-*:9000) exposes no Prometheus endpoint, and pod-level
+# container metrics are already collected cluster-wide via cadvisor/kubelet. The remaining
+# gap is application/HTTP-level metrics (request rate, latency, status codes per
+# router/service/entrypoint), which the Vireo Traefik instances expose
+# (--metrics.prometheus=true) on their "metrics" entrypoint (containerPort 9100, named
+# "metrics"). That port is on the pod but not the LoadBalancer service, so we target pods
+# directly with a PodMonitor rather than a ServiceMonitor.
+#
+# Covers both the prod (vireo-traefik-prod, etd.utk.edu) and test (vireo-traefik-test)
+# Traefiks. The namespaceSelector scopes discovery to just those two namespaces so this
+# never matches the Asimov solr-system Traefik. Series are distinguished by their namespace
+# label. Prometheus auto-discovers this (podMonitorSelector is empty / matches all).
+#
+# The Vireo Traefiks are deployed from the separate vireo-infra repo; if that changes the
+# pod labels or disables the metrics entrypoint, update the selector / port here.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: vireo-traefik
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - vireo-traefik-prod
+      - vireo-traefik-test
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
+      scheme: http
