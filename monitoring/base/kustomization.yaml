@@ -7,11 +7,7 @@ resources:
   - kube-prometheus-stack.yaml
   - grafana-admin-externalsecret.yaml
   - node-capacity-dashboard.yaml
-  # node-capacity-alerts.yaml (a PrometheusRule) is intentionally applied in a follow-up
-  # commit: the Flux Kustomization applies this whole set atomically with a dry-run, and the
-  # PrometheusRule cannot validate until the HelmRelease has installed the
-  # monitoring.coreos.com CRDs. Re-added once the stack (and its CRDs) is up.
-  # - node-capacity-alerts.yaml
+  - node-capacity-alerts.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: kube-prometheus-stack
