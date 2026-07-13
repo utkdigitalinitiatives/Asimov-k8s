@@ -18,7 +18,7 @@ spec:
   chart:
     spec:
       chart: kube-prometheus-stack
-      version: '>=65.0.0 <66.0.0'
+      version: '>=87.0.0 <88.0.0'
       sourceRef:
         kind: HelmRepository
         name: prometheus-community
@@ -32,6 +32,11 @@ spec:
   upgrade:
     crds: CreateReplace
   values:
+    # Manage CRDs via the chart's crds subchart. On a fresh install (old unmanaged CRDs
+    # deleted during teardown) Helm installs the v0.92.0 CRDs from the subchart's crds/ dir.
+    crds:
+      enabled: true
+
     # Prometheus configuration
     prometheus:
       prometheusSpec:
@@ -74,8 +79,12 @@ spec:
     grafana:
       enabled: true
 
-      # Admin credentials (consider using secrets in production)
-      adminPassword: "admin"
+      # Admin credentials from Azure Key Vault via External Secrets (grafana-admin secret,
+      # synced by grafana-admin-externalsecret.yaml). Username fixed to "admin".
+      admin:
+        existingSecret: grafana-admin
+        userKey: admin-user
+        passwordKey: admin-password
 
       # Persistent storage for dashboards
       persistence:
@@ -100,11 +109,29 @@ spec:
       # Default dashboards
       defaultDashboardsEnabled: true
 
+      # Public access via Traefik + Let's Encrypt (cert-manager).
+      # DNS: grafana.lib.utk.edu -> 68.220.244.21 (Asimov Traefik LB, IngressClass "traefik").
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        hosts:
+          - grafana.lib.utk.edu
+        path: /
+        pathType: Prefix
+        tls:
+          - secretName: grafana-tls
+            hosts:
+              - grafana.lib.utk.edu
+
       # Grafana configuration
       grafana.ini:
         server:
-          root_url: "%(protocol)s://%(domain)s/grafana/"
-          serve_from_sub_path: true
+          domain: grafana.lib.utk.edu
+          root_url: "https://grafana.lib.utk.edu"
+          serve_from_sub_path: false
         analytics:
           check_for_updates: true
 
