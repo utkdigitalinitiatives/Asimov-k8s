@@ -37,6 +37,19 @@ spec:
     crds:
       enabled: true
 
+    # AKS runs the control plane as a managed service and does not expose the
+    # kube-controller-manager, kube-scheduler, or kube-proxy metrics endpoints. Disabling
+    # these components drops their unscrapeable ServiceMonitors AND the permanently-firing
+    # false-positive KubeControllerManagerDown / KubeSchedulerDown / KubeProxyDown critical
+    # alerts (plus the *InstanceUnreachable siblings) — the rule groups are gated on each
+    # component's `enabled` flag.
+    kubeControllerManager:
+      enabled: false
+    kubeScheduler:
+      enabled: false
+    kubeProxy:
+      enabled: false
+
     # Prometheus configuration
     prometheus:
       prometheusSpec:
