@@ -97,7 +97,7 @@ data:
       "timezone": "browser",
       "title": "Vireo \u2014 Traefik / Ingress",
       "uid": "vireo-traefik-ingress",
-      "version": 1,
+      "version": 2,
       "weekStart": "",
       "panels": [
         {
@@ -377,7 +377,7 @@ data:
         {
           "id": 6,
           "type": "stat",
-          "title": "Config reload",
+          "title": "Last config reload",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -393,40 +393,22 @@ data:
               "color": {
                 "mode": "thresholds"
               },
-              "unit": "short",
+              "unit": "dateTimeFromNow",
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
-                  },
-                  {
                     "color": "green",
-                    "value": 1
+                    "value": null
                   }
                 ]
               },
-              "mappings": [
-                {
-                  "type": "value",
-                  "options": {
-                    "0": {
-                      "text": "FAILING",
-                      "color": "red"
-                    },
-                    "1": {
-                      "text": "OK",
-                      "color": "green"
-                    }
-                  }
-                }
-              ]
+              "mappings": []
             },
             "overrides": []
           },
           "options": {
-            "colorMode": "background",
+            "colorMode": "none",
             "graphMode": "none",
             "justifyMode": "auto",
             "orientation": "auto",
@@ -446,7 +428,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "min(traefik_config_last_reload_success{namespace=~\"$namespace\"})",
+              "expr": "max(traefik_config_last_reload_success{namespace=~\"$namespace\"}) * 1000",
               "range": true,
               "instant": false,
               "refId": "A"
