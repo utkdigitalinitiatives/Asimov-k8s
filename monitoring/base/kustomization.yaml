@@ -9,6 +9,7 @@ resources:
   - node-capacity-dashboard.yaml
   - node-capacity-alerts.yaml
   - vireo-traefik-podmonitor.yaml
+  - vireo-traefik-dashboard.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: kube-prometheus-stack
