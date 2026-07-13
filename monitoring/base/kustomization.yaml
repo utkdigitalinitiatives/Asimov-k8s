@@ -4,9 +4,13 @@ kind: Kustomization
 resources:
   - monitoring-namespace.yaml
   - flux-rbac.yaml
-  - kube-prometheus-stack.yaml
-  - node-capacity-dashboard.yaml
-  - node-capacity-alerts.yaml
+  # TEARDOWN (temporary): kube-prometheus-stack, node-capacity-dashboard, and
+  # node-capacity-alerts are removed to uninstall the stale 65.8.1 release and let Flux
+  # prune the node-capacity PrometheusRule before its CRD is deleted. All three are
+  # restored in the follow-up commit that fresh-installs chart 87.x.
+  # - kube-prometheus-stack.yaml
+  # - node-capacity-dashboard.yaml
+  # - node-capacity-alerts.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: kube-prometheus-stack
