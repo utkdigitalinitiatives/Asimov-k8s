@@ -453,29 +453,27 @@ data:
               },
               "editorMode": "code",
               "expr": "(probe_ssl_earliest_cert_expiry - time()) / 86400",
-              "legendFormat": "{{ site }}",
+              "legendFormat": "",
               "range": false,
               "instant": true,
-              "refId": "A"
+              "refId": "A",
+              "format": "table"
             }
           ],
           "transformations": [
-            {
-              "id": "labelsToFields",
-              "options": {
-                "mode": "columns",
-                "keepLabels": [
-                  "site",
-                  "instance"
-                ]
-              }
-            },
             {
               "id": "organize",
               "options": {
                 "excludeByName": {
                   "Time": true,
-                  "job": true
+                  "job": true,
+                  "namespace": true,
+                  "__name__": true
+                },
+                "indexByName": {
+                  "site": 0,
+                  "instance": 1,
+                  "Value": 2
                 },
                 "renameByName": {
                   "Value": "Days until expiry",
