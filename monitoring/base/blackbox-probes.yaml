@@ -1,0 +1,48 @@
+---
+# Endpoints probed by blackbox-exporter for external up/down + response-time + cert-expiry.
+# Each target becomes a Prometheus scrape of the exporter's /probe endpoint; the resulting
+# series carry instance=<url> plus a friendly `site` label (added via relabeling) used by the
+# alerts and the "Endpoint Uptime" dashboard.
+#
+# Verified reachable from an in-cluster pod (hairpin to each Traefik LB works):
+#   - grafana.lib.utk.edu            -> 302 -> /login -> 200  (Asimov Traefik 68.220.244.21)
+#   - mainsite.libsolr.lib.utk.edu   -> 200 on /solr/ (no auth needed for the up-check)
+#   - etd.utk.edu                    -> 200  (Vireo PROD, now on-cluster: the vireo-traefik-prod
+#                                             LoadBalancer 74.249.33.88, its own IP from the
+#                                             VM->cluster migration; not the VM anymore)
+#
+# Deliberately NOT probed: test.etd.utk.edu (cluster vireo-test) currently returns 503 (no
+# healthy backend) and would alert down permanently — add it once the test app is serving.
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: public-endpoints
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: kube-prometheus-stack
+spec:
+  jobName: blackbox-http
+  interval: 30s
+  module: http_2xx
+  prober:
+    url: blackbox-exporter.monitoring.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      static:
+        - https://grafana.lib.utk.edu
+        - https://mainsite.libsolr.lib.utk.edu/solr/
+        - https://etd.utk.edu
+      relabelingConfigs:
+        - sourceLabels: [__param_target]
+          regex: https://grafana\.lib\.utk\.edu.*
+          targetLabel: site
+          replacement: Grafana
+        - sourceLabels: [__param_target]
+          regex: https://mainsite\.libsolr\.lib\.utk\.edu.*
+          targetLabel: site
+          replacement: Solr (mainsite)
+        - sourceLabels: [__param_target]
+          regex: https://etd\.utk\.edu.*
+          targetLabel: site
+          replacement: Vireo ETD (prod)

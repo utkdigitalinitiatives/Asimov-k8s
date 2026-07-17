@@ -1,0 +1,69 @@
+---
+# prometheus-blackbox-exporter: probes external HTTP(S) endpoints from inside the cluster and
+# exposes probe_success / probe_http_status_code / probe_duration_seconds / probe_ssl_* metrics.
+# Prometheus drives it via the Probe CR in blackbox-probes.yaml (each Probe target becomes a
+# scrape of /probe?target=...&module=...). This gives UptimeRobot/Uptime-Kuma-style up/down,
+# response-time, and cert-expiry monitoring for our public sites, assembled from the existing
+# kube-prometheus-stack rather than a standalone app.
+#
+# Reuses the prometheus-community HelmRepository defined in kube-prometheus-stack.yaml.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: blackbox-exporter
+  namespace: monitoring
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: prometheus-blackbox-exporter
+      version: '>=11.15.0 <12.0.0'
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: monitoring
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  values:
+    # Pin a clean resource name (default would be blackbox-exporter-prometheus-blackbox-exporter).
+    # The Probe CR references the Service as blackbox-exporter.monitoring.svc:9115.
+    fullnameOverride: blackbox-exporter
+
+    # Probe modules. http_2xx follows redirects (so Grafana's 302 -> /login -> 200 counts as
+    # up) and prefers IPv4. Default valid_status_codes is 2xx, which covers all three targets
+    # (grafana 302->200, solr /solr/ 200, etd 200). TLS verification stays on so a broken/
+    # expired cert correctly fails the probe.
+    config:
+      modules:
+        http_2xx:
+          prober: http
+          timeout: 10s
+          http:
+            method: GET
+            follow_redirects: true
+            preferred_ip_protocol: "ip4"
+            fail_if_not_ssl: true
+
+    # Tiny footprint — the user pool is tight (see NodeCPURequests alerts), keep requests low.
+    resources:
+      requests:
+        cpu: 10m
+        memory: 25Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
+
+    nodeSelector:
+      kubernetes.azure.com/mode: user
+
+    # Scrape the exporter's own /metrics so its up-ness is itself monitored. Uses the
+    # release label the kube-prometheus-stack Prometheus selects on.
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: kube-prometheus-stack
+
+    # Single replica is plenty for a handful of endpoints.
+    replicas: 1

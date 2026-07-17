@@ -10,6 +10,10 @@ resources:
   - node-capacity-alerts.yaml
   - vireo-traefik-podmonitor.yaml
   - vireo-traefik-dashboard.yaml
+  - blackbox-exporter.yaml
+  - blackbox-probes.yaml
+  - blackbox-alerts.yaml
+  - blackbox-dashboard.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: kube-prometheus-stack

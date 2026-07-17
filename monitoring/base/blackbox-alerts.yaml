@@ -1,0 +1,62 @@
+---
+# Alerts derived from the blackbox-exporter probes (see blackbox-probes.yaml). Up/down is the
+# headline signal; latency and cert-expiry are secondary. `site` / `instance` labels come from
+# the Probe. Until Alertmanager has a real receiver these fire into the null receiver (visible
+# in the Alertmanager UI + Grafana), so nothing is delivered yet — that's the notifications
+# follow-up.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: blackbox-endpoint-alerts
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: kube-prometheus-stack
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: blackbox-endpoints
+      rules:
+        # Headline up/down. probe_success == 0 means the exporter reached a verdict and the
+        # site failed (bad status code, TLS failure, connection refused, timeout).
+        - alert: EndpointDown
+          expr: probe_success == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.site }} is DOWN"
+            description: "External probe of {{ $labels.instance }} has been failing for more than 2 minutes."
+
+        # Safety net: if the whole probe_success series disappears, EndpointDown can't fire
+        # (nothing to evaluate). This catches a dead blackbox-exporter or a broken scrape.
+        - alert: EndpointProbesMissing
+          expr: absent(probe_success)
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Blackbox probes are not reporting"
+            description: "No probe_success series for more than 5 minutes — blackbox-exporter is likely down or unscrapeable, so up/down alerting is blind."
+
+        # Sustained slow responses. These endpoints normally answer in <200ms; >2s for 5m is a
+        # real user-facing slowdown, not a blip.
+        - alert: EndpointSlow
+          expr: probe_duration_seconds > 2
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.site }} is slow"
+            description: "External probe of {{ $labels.instance }} took {{ printf \"%.2f\" $value }}s (>2s) for more than 5 minutes."
+
+        # TLS cert nearing expiry. Let's Encrypt (grafana, solr) auto-renews at ~30 days left,
+        # so <14 days means renewal is failing. etd.utk.edu's cert is managed on the VM.
+        # Structured so $value is the days remaining.
+        - alert: EndpointCertExpiringSoon
+          expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 14 and probe_ssl_earliest_cert_expiry > 0
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.site }} TLS cert expires soon"
+            description: "TLS certificate for {{ $labels.instance }} expires in {{ printf \"%.1f\" $value }} days."
