@@ -93,6 +93,15 @@ spec:
     grafana:
       enabled: true
 
+      # Grafana's persistence PVC is a ReadWriteOnce Azure managed disk, which can attach to
+      # only one node at a time. The chart's default RollingUpdate strategy starts the new
+      # pod (often on a different node) before the old pod releases the disk, causing a
+      # "Multi-Attach" deadlock that never converges. Recreate terminates the old pod first
+      # so the disk detaches and the new pod can mount it. Brief downtime on upgrade is
+      # acceptable for a single-replica Grafana.
+      deploymentStrategy:
+        type: Recreate
+
       # Admin credentials from Azure Key Vault via External Secrets (grafana-admin secret,
       # synced by grafana-admin-externalsecret.yaml). Username fixed to "admin".
       admin:
