@@ -6,6 +6,7 @@ resources:
   - flux-rbac.yaml
   - kube-prometheus-stack.yaml
   - grafana-admin-externalsecret.yaml
+  - grafana-oauth-externalsecret.yaml
   - node-capacity-dashboard.yaml
   - node-capacity-alerts.yaml
   - vireo-traefik-podmonitor.yaml

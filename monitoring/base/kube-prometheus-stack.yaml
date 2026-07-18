@@ -100,6 +100,15 @@ spec:
         userKey: admin-user
         passwordKey: admin-password
 
+      # Inject the Entra ID (Azure AD) OAuth client secret from the grafana-oauth
+      # ExternalSecret (-> Key Vault grafana-azuread-client-secret) as an env var,
+      # referenced by grafana.ini's auth.azuread.client_secret via $__env{...}.
+      envValueFrom:
+        GF_AUTH_AZUREAD_CLIENT_SECRET:
+          secretKeyRef:
+            name: grafana-oauth
+            key: client-secret
+
       # Persistent storage for dashboards
       persistence:
         enabled: true
@@ -148,6 +157,30 @@ spec:
           serve_from_sub_path: false
         analytics:
           check_for_updates: true
+        # SSO users who sign in via Entra get this org role by default. The local
+        # `admin` account (Key Vault password, login form still enabled) stays as the
+        # break-glass full admin. Bump/lower this, or add App Roles for per-user
+        # Admin/Editor/Viewer, later if needed.
+        users:
+          auto_assign_org_role: Editor
+        # Microsoft Entra ID (Azure AD) OAuth.
+        # Access is gated in Entra: the enterprise app has "User assignment required =
+        # Yes" and only the chosen security group is assigned, so non-members cannot
+        # complete sign-in. client_id and tenant are not secrets; the client secret is
+        # injected from Key Vault via the GF_AUTH_AZUREAD_CLIENT_SECRET env var.
+        # Redirect URI to register in Entra: https://grafana.lib.utk.edu/login/azuread
+        "auth.azuread":
+          enabled: true
+          name: UTK Login
+          allow_sign_up: true
+          auto_login: false
+          client_id: "e131bae2-bd12-4ae1-be71-934e8975a459"
+          client_secret: "$__env{GF_AUTH_AZUREAD_CLIENT_SECRET}"
+          scopes: "openid email profile"
+          auth_url: "https://login.microsoftonline.com/515813d9-717d-45dd-9eca-9aa19c09d6f9/oauth2/v2.0/authorize"
+          token_url: "https://login.microsoftonline.com/515813d9-717d-45dd-9eca-9aa19c09d6f9/oauth2/v2.0/token"
+          allowed_organizations: "515813d9-717d-45dd-9eca-9aa19c09d6f9"
+          role_attribute_strict: false
 
     # Alertmanager configuration
     alertmanager:
