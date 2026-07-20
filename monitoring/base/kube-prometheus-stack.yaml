@@ -194,6 +194,13 @@ spec:
     # Alertmanager configuration
     alertmanager:
       alertmanagerSpec:
+        # Alertmanager config comes from the ESO-rendered `alertmanager-config` secret
+        # (alertmanager-config-externalsecret.yaml), NOT the chart's inline `config`, so the
+        # Postmark token stays in Key Vault. useExistingSecret makes the chart skip creating its
+        # own config secret; configSecret points the operator at ours (key: alertmanager.yaml).
+        useExistingSecret: true
+        configSecret: alertmanager-config
+
         # Storage for Alertmanager
         storage:
           volumeClaimTemplate:

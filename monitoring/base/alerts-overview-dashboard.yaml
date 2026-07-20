@@ -1,0 +1,283 @@
+---
+# "Alerts Overview" Grafana dashboard. Built entirely on Prometheus' synthetic `ALERTS` metric,
+# so it shows EVERY firing/pending alert regardless of whether it notifies Teams. This is where
+# the warning-level capacity/overcommit alerts (which route to `null`, not Teams) remain visible.
+# Provisioned via the Grafana sidecar (grafana_dashboard: "1" label), same pattern as
+# node-capacity-dashboard.yaml and blackbox-dashboard.yaml. Datasource uid is hardcoded to
+# "prometheus" to match this Grafana's provisioned datasource.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alerts-overview-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/part-of: kube-prometheus-stack
+data:
+  alerts-overview.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+          "id": 1,
+          "panels": [],
+          "title": "Firing Now",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+          "id": 2,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "pluginVersion": "13.1.0",
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "editorMode": "code", "expr": "count(ALERTS{alertstate=\"firing\", severity=\"critical\"}) or vector(0)", "instant": true, "legendFormat": "", "range": false, "refId": "A" }
+          ],
+          "title": "Critical firing",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 1 } ] },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+          "id": 3,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "pluginVersion": "13.1.0",
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "editorMode": "code", "expr": "count(ALERTS{alertstate=\"firing\", severity=\"warning\"}) or vector(0)", "instant": true, "legendFormat": "", "range": false, "refId": "A" }
+          ],
+          "title": "Warning firing",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "blue", "value": 1 } ] },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+          "id": 4,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "pluginVersion": "13.1.0",
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "editorMode": "code", "expr": "count(ALERTS{alertstate=\"firing\", severity!~\"critical|warning\"}) or vector(0)", "instant": true, "legendFormat": "", "range": false, "refId": "A" }
+          ],
+          "title": "Other firing (info/none)",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "purple", "value": 1 } ] },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+          "id": 5,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "pluginVersion": "13.1.0",
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "editorMode": "code", "expr": "count(ALERTS{alertstate=\"pending\"}) or vector(0)", "instant": true, "legendFormat": "", "range": false, "refId": "A" }
+          ],
+          "title": "Pending",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Every alert currently firing, whether or not it notifies Teams. Teams receives only Endpoint* (blackbox) and critical alerts; everything else lives here.",
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "filterable": true, "inspect": false },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "severity" },
+                "properties": [
+                  { "id": "custom.cellOptions", "value": { "type": "color-text" } },
+                  { "id": "mappings", "value": [
+                    { "type": "value", "options": { "critical": { "color": "red", "index": 0 }, "warning": { "color": "orange", "index": 1 }, "info": { "color": "blue", "index": 2 }, "none": { "color": "text", "index": 3 } } }
+                  ] }
+                ]
+              }
+            ]
+          },
+          "gridPos": { "h": 9, "w": 24, "x": 0, "y": 5 },
+          "id": 6,
+          "options": {
+            "cellHeight": "sm",
+            "footer": { "countRows": false, "fields": "", "reducer": [ "sum" ], "show": false },
+            "showHeader": true,
+            "sortBy": [ { "displayName": "severity", "desc": false } ]
+          },
+          "pluginVersion": "13.1.0",
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "editorMode": "code", "expr": "ALERTS{alertstate=\"firing\"}", "format": "table", "instant": true, "legendFormat": "", "range": false, "refId": "A" }
+          ],
+          "title": "Currently firing",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true, "Value": true, "__name__": true, "alertstate": true, "prometheus": true, "job": true, "service": true, "endpoint": true, "container": true, "uid": true },
+                "indexByName": { "alertname": 0, "severity": 1, "namespace": 2, "site": 3, "instance": 4, "node": 5 },
+                "renameByName": {}
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+          "id": 7,
+          "panels": [],
+          "title": "History & Pending",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Count of firing alerts by severity over the selected time range.",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto",
+                "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none",
+                "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "stepAfter",
+                "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never",
+                "spanNulls": false, "stacking": { "group": "A", "mode": "normal" }, "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "min": 0,
+              "unit": "short"
+            },
+            "overrides": [
+              { "matcher": { "id": "byName", "options": "critical" }, "properties": [ { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } } ] },
+              { "matcher": { "id": "byName", "options": "warning" }, "properties": [ { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } } ] }
+            ]
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+          "id": 8,
+          "options": {
+            "legend": { "calcs": [ "lastNotNull", "max" ], "displayMode": "table", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "multi", "sort": "desc" }
+          },
+          "pluginVersion": "13.1.0",
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "editorMode": "code", "expr": "sum by (severity) (ALERTS{alertstate=\"firing\"})", "legendFormat": "{{severity}}", "range": true, "refId": "A" }
+          ],
+          "title": "Firing alerts by severity",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Alerts in the pending state (condition true but not yet held for its `for:` duration).",
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "filterable": true, "inspect": false },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+          "id": 9,
+          "options": {
+            "cellHeight": "sm",
+            "footer": { "countRows": false, "fields": "", "reducer": [ "sum" ], "show": false },
+            "showHeader": true,
+            "sortBy": [ { "displayName": "severity", "desc": false } ]
+          },
+          "pluginVersion": "13.1.0",
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "editorMode": "code", "expr": "ALERTS{alertstate=\"pending\"}", "format": "table", "instant": true, "legendFormat": "", "range": false, "refId": "A" }
+          ],
+          "title": "Currently pending",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true, "Value": true, "__name__": true, "alertstate": true, "prometheus": true, "job": true, "service": true, "endpoint": true, "container": true, "uid": true },
+                "indexByName": { "alertname": 0, "severity": 1, "namespace": 2, "site": 3, "instance": 4, "node": 5 },
+                "renameByName": {}
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": [ "alerts", "alertmanager", "overview" ],
+      "templating": { "list": [] },
+      "time": { "from": "now-6h", "to": "now" },
+      "timezone": "browser",
+      "title": "Alerts Overview",
+      "uid": "alerts-overview",
+      "version": 1,
+      "weekStart": ""
+    }

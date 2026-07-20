@@ -7,8 +7,10 @@ resources:
   - kube-prometheus-stack.yaml
   - grafana-admin-externalsecret.yaml
   - grafana-oauth-externalsecret.yaml
+  - alertmanager-config-externalsecret.yaml
   - node-capacity-dashboard.yaml
   - node-capacity-alerts.yaml
+  - alerts-overview-dashboard.yaml
   - vireo-traefik-podmonitor.yaml
   - vireo-traefik-dashboard.yaml
   - blackbox-exporter.yaml
