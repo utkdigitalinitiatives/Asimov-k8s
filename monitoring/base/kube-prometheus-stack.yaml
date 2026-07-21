@@ -166,17 +166,27 @@ spec:
           serve_from_sub_path: false
         analytics:
           check_for_updates: true
-        # SSO users who sign in via Entra get this org role by default. The local
-        # `admin` account (Key Vault password, login form still enabled) stays as the
-        # break-glass full admin. Bump/lower this, or add App Roles for per-user
-        # Admin/Editor/Viewer, later if needed.
+        # Org role comes from the Entra App Role in the token's `roles` claim, mapped
+        # natively by the azuread provider (app-role `value` must be exactly
+        # Viewer/Editor/Admin, case-sensitive) — NOT blanket-assigned. With
+        # role_attribute_strict: true (below), an SSO user with no App Role is denied
+        # login, so this is only a conservative floor for non-SSO paths. The local
+        # `admin` account (Key Vault password, login form still enabled) is the
+        # break-glass Grafana server admin.
         users:
-          auto_assign_org_role: Editor
+          auto_assign_org_role: Viewer
         # Microsoft Entra ID (Azure AD) OAuth.
-        # Access is gated in Entra: the enterprise app has "User assignment required =
-        # Yes" and only the chosen security group is assigned, so non-members cannot
-        # complete sign-in. client_id and tenant are not secrets; the client secret is
-        # injected from Key Vault via the GF_AUTH_AZUREAD_CLIENT_SECRET env var.
+        # Access control lives HERE (app-side), NOT in an Entra assignment lock: the app
+        # registration has "User assignment required = No", so any UTK user can reach
+        # sign-in and self-consent to the trivial openid/email/profile scopes (avoiding a
+        # global-admin consent / GRC review — this is how the Janeway app works). Grafana
+        # then restricts access by App Role: only Digital Initiatives members are assigned
+        # a Grafana App Role in Entra, so only they receive a `roles` claim, and
+        # role_attribute_strict: true denies everyone else. App Roles are used instead of
+        # allowed_groups on purpose: the `roles` claim never overflows and needs no Graph
+        # permission, whereas the `groups` claim overflows for users in >200 groups and
+        # would force a Graph directory read. client_id and tenant are not secrets; the
+        # client secret is injected from Key Vault via GF_AUTH_AZUREAD_CLIENT_SECRET.
         # Redirect URI to register in Entra: https://grafana.lib.utk.edu/login/azuread
         "auth.azuread":
           enabled: true
@@ -189,7 +199,9 @@ spec:
           auth_url: "https://login.microsoftonline.com/515813d9-717d-45dd-9eca-9aa19c09d6f9/oauth2/v2.0/authorize"
           token_url: "https://login.microsoftonline.com/515813d9-717d-45dd-9eca-9aa19c09d6f9/oauth2/v2.0/token"
           allowed_organizations: "515813d9-717d-45dd-9eca-9aa19c09d6f9"
-          role_attribute_strict: false
+          # Access gate (replaces the Entra "User assignment required" lock): deny any
+          # SSO user who has no Grafana App Role (Viewer/Editor/Admin) assigned in Entra.
+          role_attribute_strict: true
 
     # Alertmanager configuration
     alertmanager:
