@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: polk-correspondence
+  namespace: polk-correspondence
+  labels:
+    app.kubernetes.io/name: polk-correspondence
+    app.kubernetes.io/component: polk-webapp
+spec:
+  selector:
+    app.kubernetes.io/name: polk-correspondence
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

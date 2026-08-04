@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: polk-correspondence
+  namespace: polk-correspondence
+  labels:
+    app.kubernetes.io/name: polk-correspondence
+    app.kubernetes.io/component: polk-webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: polk-correspondence
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: polk-correspondence
+        app.kubernetes.io/component: polk-webapp
+    spec:
+      nodeSelector:
+        kubernetes.azure.com/mode: user
+      containers:
+        - name: polk-correspondence
+          image: polkcorrespondence.azurecr.io/polk-correspondence:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 512m
+              memory: 512Mi
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 20
