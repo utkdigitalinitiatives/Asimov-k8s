@@ -7,7 +7,7 @@ spec:
   # Solr version and replicas
   replicas: 2
   solrImage:
-    tag: "9.8.1"
+    tag: "9.10.1"
   
   # Java memory configuration
   solrJavaMem: "-Xms1g -Xmx2g"
