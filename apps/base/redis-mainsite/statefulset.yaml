@@ -22,7 +22,8 @@ spec:
         kubernetes.azure.com/mode: user
       containers:
         - name: redis
-          image: redis:7-alpine
+          image: redis:7.4.11-alpine
+          imagePullPolicy: IfNotPresent
           args:
             - redis-server
             - /etc/redis/redis.conf
