@@ -32,9 +32,9 @@ spec:
     fullnameOverride: blackbox-exporter
 
     # Probe modules. http_2xx follows redirects (so Grafana's 302 -> /login -> 200 counts as
-    # up) and prefers IPv4. Default valid_status_codes is 2xx, which covers all three targets
-    # (grafana 302->200, solr /solr/ 200, etd 200). TLS verification stays on so a broken/
-    # expired cert correctly fails the probe.
+    # up) and prefers IPv4. Default valid_status_codes is 2xx, which covers all four targets
+    # (grafana 302->200, solr /solr/ 200, etd 200, lib.utk.edu 200). TLS verification stays on
+    # so a broken/expired cert correctly fails the probe.
     config:
       modules:
         http_2xx:

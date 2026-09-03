@@ -10,6 +10,11 @@
 #   - etd.utk.edu                    -> 200  (Vireo PROD, now on-cluster: the vireo-traefik-prod
 #                                             LoadBalancer 74.249.33.88, its own IP from the
 #                                             VM->cluster migration; not the VM anymore)
+#   - lib.utk.edu                    -> 200  (main library website: Drupal 10 on Pantheon behind
+#                                             Fastly, NOT on this cluster. Added Sept 3, 2026
+#                                             after a hosting-provider 503 went unnoticed until
+#                                             a user filed a ticket. Its search uses the Solr
+#                                             and Redis that DO run here.)
 #
 # Deliberately NOT probed: test.etd.utk.edu (cluster vireo-test) currently returns 503 (no
 # healthy backend) and would alert down permanently — add it once the test app is serving.
@@ -33,6 +38,7 @@ spec:
         - https://grafana.lib.utk.edu
         - https://mainsite.libsolr.lib.utk.edu/solr/
         - https://etd.utk.edu
+        - https://lib.utk.edu
       relabelingConfigs:
         - sourceLabels: [__param_target]
           regex: https://grafana\.lib\.utk\.edu.*
@@ -46,3 +52,7 @@ spec:
           regex: https://etd\.utk\.edu.*
           targetLabel: site
           replacement: Vireo ETD (prod)
+        - sourceLabels: [__param_target]
+          regex: https://lib\.utk\.edu.*
+          targetLabel: site
+          replacement: Main site (lib.utk.edu)
