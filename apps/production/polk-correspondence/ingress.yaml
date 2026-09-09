@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: polk-correspondence
+  namespace: polk-correspondence
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - polk.lib.utk.edu
+      secretName: polk-correspondence-tls
+  rules:
+    - host: polk.lib.utk.edu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: polk-correspondence
+                port:
+                  number: 8080
