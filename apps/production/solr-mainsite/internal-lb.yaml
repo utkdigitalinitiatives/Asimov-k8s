@@ -1,8 +1,9 @@
 ---
 # Internal Azure Load Balancer for VNet-peered access from the Drupal VMSS.
 # - Pinned IP must live inside the AKS VNet address space (10.224.0.0/12)
-#   and is also referenced by lib-main-infra (var.solr_internal_lb_ip ->
-#   private DNS A record solr.lib-main.internal). Keep both in sync.
+#   and is also referenced by every Drupal site's infra repo (lib-main-infra,
+#   mccarthy-infra: var.solr_internal_lb_ip -> each site's own private DNS
+#   A record solr.search.utklib.internal). Keep them in sync.
 # - Public access remains via the existing Traefik Ingress (custom-ingress.yaml).
 # - Selector matches the SolrCloud operator's pod labels, so traffic load-
 #   balances across all Solr replicas.

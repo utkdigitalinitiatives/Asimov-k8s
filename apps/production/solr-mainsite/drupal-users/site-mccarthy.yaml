@@ -1,0 +1,65 @@
+# mccarthy's Drupal logins on the shared solr-mainsite cluster.
+#
+# The passwords are created by mccarthy-infra Terraform in mccarthy-kv-553468f1
+# (prod in environments/production, dev in environments/devtest), which also
+# grants this cluster's ESO identity Key Vault Secrets User on the vault.
+# Enable this file in kustomization.yaml only after that apply: until then these
+# ExternalSecrets cannot sync and Flux marks the apps Kustomization not ready.
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: azure-keyvault-mccarthy
+spec:
+  provider:
+    azurekv:
+      authType: WorkloadIdentity
+      vaultUrl: "https://mccarthy-kv-553468f1.vault.azure.net/"
+      serviceAccountRef:
+        name: external-secrets
+        namespace: external-secrets
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: solr-drupal-mccarthy-prod
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: azure-keyvault-mccarthy
+  target:
+    name: solr-drupal-mccarthy-prod
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        username: drupal-mccarthy-prod
+        collection: mccarthy_prod
+        password: "{{ .password }}"
+  data:
+    - secretKey: password
+      remoteRef:
+        key: production-solr-drupal-mccarthy-prod-password
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: solr-drupal-mccarthy-dev
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: azure-keyvault-mccarthy
+  target:
+    name: solr-drupal-mccarthy-dev
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        username: drupal-mccarthy-dev
+        collection: mccarthy_dev
+        password: "{{ .password }}"
+  data:
+    - secretKey: password
+      remoteRef:
+        key: dev-solr-drupal-mccarthy-password
