@@ -8,6 +8,11 @@ spec:
   replicas: 2
   solrImage:
     tag: "9.10.1"
+
+  # Drupal (search_api_solr) schemas use solr.ICUCollationField, which lives in
+  # the analysis-extras module. Loading it here sets SOLR_MODULES on the pod.
+  solrModules:
+    - analysis-extras
   
   # Java memory configuration
   solrJavaMem: "-Xms1g -Xmx2g"
