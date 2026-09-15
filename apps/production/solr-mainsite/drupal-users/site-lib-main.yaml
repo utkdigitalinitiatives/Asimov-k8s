@@ -1,0 +1,65 @@
+# lib-main's Drupal logins on the shared solr-mainsite cluster.
+#
+# The passwords are created by lib-main-infra Terraform in lib-main-kv-4ad11abb
+# (prod in environments/production, dev in environments/devtest), which also
+# grants this cluster's ESO identity Key Vault Secrets User on the vault.
+# Enable this file in kustomization.yaml only after that apply: until then these
+# ExternalSecrets cannot sync and Flux marks the apps Kustomization not ready.
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: azure-keyvault-lib-main
+spec:
+  provider:
+    azurekv:
+      authType: WorkloadIdentity
+      vaultUrl: "https://lib-main-kv-4ad11abb.vault.azure.net/"
+      serviceAccountRef:
+        name: external-secrets
+        namespace: external-secrets
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: solr-drupal-mainsite-prod
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: azure-keyvault-lib-main
+  target:
+    name: solr-drupal-mainsite-prod
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        username: drupal-mainsite-prod
+        collection: mainsite_prod
+        password: "{{ .password }}"
+  data:
+    - secretKey: password
+      remoteRef:
+        key: production-solr-drupal-mainsite-prod-password
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: solr-drupal-mainsite-dev
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: azure-keyvault-lib-main
+  target:
+    name: solr-drupal-mainsite-dev
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        username: drupal-mainsite-dev
+        collection: mainsite_dev
+        password: "{{ .password }}"
+  data:
+    - secretKey: password
+      remoteRef:
+        key: dev-solr-drupal-mainsite-password

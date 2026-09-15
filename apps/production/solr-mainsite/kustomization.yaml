@@ -6,6 +6,8 @@ namespace: solr-mainsite
 resources:
   - ../../base/solr-mainsite
   - custom-ingress.yaml
+  - internal-lb.yaml
+  - drupal-users
 
 commonLabels:
   environment: production

@@ -1,0 +1,118 @@
+# Keeps Solr's Drupal logins in line with Git and Key Vault, through Solr's
+# Security API. See reconcile-drupal-users.py for why this is not done in
+# security.json (the operator only writes that file on a brand-new cluster).
+#
+# A CronJob, not a one-shot Job, because the inputs change outside Git: a
+# password appears in Key Vault after this merges, or gets rotated there. A run
+# with nothing to do sends no writes, so security.json in ZooKeeper is untouched.
+#
+# To add a Drupal login: an ExternalSecret in that site's site-*.yaml, plus one
+# projected source under the drupal-users volume below.
+#
+# Run it now instead of waiting for the schedule:
+#   kubectl create job -n solr-mainsite --from=cronjob/solr-drupal-users solr-drupal-users-manual
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: solr-drupal-users
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          restartPolicy: Never
+          # Talks to Solr only, never to the Kubernetes API.
+          automountServiceAccountToken: false
+          nodeSelector:
+            kubernetes.azure.com/mode: user
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            fsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: reconcile
+              image: python:3.12.14-alpine3.24
+              command: ["python3", "/opt/reconcile/reconcile-drupal-users.py"]
+              env:
+                - name: SOLR_URL
+                  value: http://solr-mainsite-solrcloud-common.solr-mainsite.svc.cluster.local:8983/solr
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 96Mi
+              volumeMounts:
+                - name: script
+                  mountPath: /opt/reconcile
+                  readOnly: true
+                - name: admin
+                  mountPath: /var/run/solr-admin
+                  readOnly: true
+                - name: drupal-users
+                  mountPath: /var/run/drupal-users
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: solr-drupal-users-script
+            # The operator-generated admin login. Its k8s-oper and solr logins
+            # are deliberately left alone.
+            - name: admin
+              secret:
+                secretName: solr-mainsite-solrcloud-security-bootstrap
+                defaultMode: 0440
+                items:
+                  - key: admin
+                    path: password
+            # One directory per login. optional: a site whose Secret does not
+            # exist yet is skipped, not an error.
+            - name: drupal-users
+              projected:
+                defaultMode: 0440
+                sources:
+                  - secret:
+                      name: solr-drupal-mainsite-prod
+                      optional: true
+                      items:
+                        - {key: username, path: mainsite-prod/username}
+                        - {key: collection, path: mainsite-prod/collection}
+                        - {key: password, path: mainsite-prod/password}
+                  - secret:
+                      name: solr-drupal-mainsite-dev
+                      optional: true
+                      items:
+                        - {key: username, path: mainsite-dev/username}
+                        - {key: collection, path: mainsite-dev/collection}
+                        - {key: password, path: mainsite-dev/password}
+                  - secret:
+                      name: solr-drupal-mccarthy-prod
+                      optional: true
+                      items:
+                        - {key: username, path: mccarthy-prod/username}
+                        - {key: collection, path: mccarthy-prod/collection}
+                        - {key: password, path: mccarthy-prod/password}
+                  - secret:
+                      name: solr-drupal-mccarthy-dev
+                      optional: true
+                      items:
+                        - {key: username, path: mccarthy-dev/username}
+                        - {key: collection, path: mccarthy-dev/collection}
+                        - {key: password, path: mccarthy-dev/password}
