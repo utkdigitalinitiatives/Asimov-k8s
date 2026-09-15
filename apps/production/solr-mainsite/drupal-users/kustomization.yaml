@@ -8,7 +8,7 @@ resources:
   # One file per Drupal site. Uncomment a site only after its infra repo has
   # applied the Key Vault passwords and the ESO grant (see the file header).
   # - site-lib-main.yaml
-  # - site-mccarthy.yaml
+  - site-mccarthy.yaml
 
 configMapGenerator:
   - name: solr-drupal-users-script
