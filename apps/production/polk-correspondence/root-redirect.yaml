@@ -1,0 +1,13 @@
+# The old VM's Apache sent "/" to the Polk papers app. Without Apache,
+# "/" would land on eXist-db's own root, so Traefik does the redirect instead.
+# Only the bare site root matches; every other path passes through unchanged.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: polk-root-redirect
+  namespace: polk-correspondence
+spec:
+  redirectRegex:
+    regex: ^(https?://[^/]+)/?$
+    replacement: ${1}/exist/apps/polk-papers/polk.xml?odd=polk.odd
+    permanent: false

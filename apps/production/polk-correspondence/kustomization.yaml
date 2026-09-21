@@ -6,6 +6,7 @@ namespace: polk-correspondence
 resources:
   - ../../base/polk-correspondence
   - ingress.yaml
+  - root-redirect.yaml
 
 commonLabels:
   environment: production
