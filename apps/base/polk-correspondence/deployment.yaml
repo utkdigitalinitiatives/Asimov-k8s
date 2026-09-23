@@ -21,7 +21,7 @@ spec:
         kubernetes.azure.com/mode: user
       containers:
         - name: polk-correspondence
-          image: polkcorrespondence.azurecr.io/polk-correspondence:latest
+          image: libdiacr.azurecr.io/polk-correspondence:latest
           ports:
             - containerPort: 8080
               name: http
