@@ -28,17 +28,27 @@ spec:
           resources:
             requests:
               cpu: 250m
-              memory: 256Mi
+              memory: 512Mi
             limits:
               cpu: 512m
-              memory: 512Mi
-          readinessProbe:
-            tcpSocket:
+              memory: 768Mi
+          # eXist can take several minutes to start. The startup probe allows up
+          # to 6 min, and readiness waits until the Polk page actually renders.
+          startupProbe:
+            httpGet:
+              path: /exist/apps/polk-papers/polk.xml
               port: 8080
-            initialDelaySeconds: 300
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: /exist/apps/polk-papers/polk.xml
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 5
           livenessProbe:
             tcpSocket:
               port: 8080
-            initialDelaySeconds: 300
             periodSeconds: 20
+            failureThreshold: 3
