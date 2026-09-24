@@ -10,6 +10,8 @@
 #   - etd.utk.edu                    -> 200  (Vireo PROD, now on-cluster: the vireo-traefik-prod
 #                                             LoadBalancer 74.249.33.88, its own IP from the
 #                                             VM->cluster migration; not the VM anymore)
+#   - cormacmccarthy.lib.utk.edu     -> 200  (Drupal on the mccarthy Azure VM, Apache/Rocky;
+#                                             not on this cluster, but its search uses solr-mainsite)
 #   - lib.utk.edu                    -> 200  (main library website: Drupal 10 on Pantheon behind
 #                                             Fastly, NOT on this cluster. Added Sept 3, 2026
 #                                             after a hosting-provider 503 went unnoticed until
@@ -39,6 +41,7 @@ spec:
         - https://mainsite.libsolr.lib.utk.edu/solr/
         - https://etd.utk.edu
         - https://lib.utk.edu
+        - https://cormacmccarthy.lib.utk.edu
       relabelingConfigs:
         - sourceLabels: [__param_target]
           regex: https://grafana\.lib\.utk\.edu.*
@@ -56,3 +59,7 @@ spec:
           regex: https://lib\.utk\.edu.*
           targetLabel: site
           replacement: Main site (lib.utk.edu)
+        - sourceLabels: [__param_target]
+          regex: https://cormacmccarthy\.lib\.utk\.edu.*
+          targetLabel: site
+          replacement: Cormac McCarthy (cormacmccarthy.lib.utk.edu)
