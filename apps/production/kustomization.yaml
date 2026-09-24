@@ -5,3 +5,4 @@ resources:
   - cert-config
   - solr-mainsite
   - redis-mainsite
+  - polk-correspondence
