@@ -41,7 +41,9 @@ spec:
         - https://mainsite.libsolr.lib.utk.edu/solr/
         - https://etd.utk.edu
         - https://lib.utk.edu
-        - https://cormacmccarthy.lib.utk.edu
+        # Paused: the mccarthy VM is shut down every night until the site launches.
+        # Uncomment to resume probing (the site relabel rule below is kept).
+        # - https://cormacmccarthy.lib.utk.edu
       relabelingConfigs:
         - sourceLabels: [__param_target]
           regex: https://grafana\.lib\.utk\.edu.*
