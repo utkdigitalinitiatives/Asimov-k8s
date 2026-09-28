@@ -36,14 +36,14 @@ spec:
           # to 6 min, and readiness waits until the Polk page actually renders.
           startupProbe:
             httpGet:
-              path: /exist/apps/polk-papers/polk.xml
+              path: /exist/apps/polk-papers/polk.xml?odd=polk.odd
               port: 8080
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 36
           readinessProbe:
             httpGet:
-              path: /exist/apps/polk-papers/polk.xml
+              path: /exist/apps/polk-papers/polk.xml?odd=polk.odd
               port: 8080
             periodSeconds: 10
             timeoutSeconds: 5
