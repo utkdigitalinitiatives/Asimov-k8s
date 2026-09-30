@@ -17,6 +17,9 @@
 #                                             after a hosting-provider 503 went unnoticed until
 #                                             a user filed a ticket. Its search uses the Solr
 #                                             and Redis that DO run here.)
+#   - polk.lib.utk.edu               -> 307 -> polk.xml -> 200  (Polk Correspondence, eXist-db,
+#                                             on-cluster behind Asimov Traefik 68.220.244.21.
+#                                             Added Sept 30, 2026.)
 #
 # Deliberately NOT probed: test.etd.utk.edu (cluster vireo-test) currently returns 503 (no
 # healthy backend) and would alert down permanently — add it once the test app is serving.
@@ -41,6 +44,7 @@ spec:
         - https://mainsite.libsolr.lib.utk.edu/solr/
         - https://etd.utk.edu
         - https://lib.utk.edu
+        - https://polk.lib.utk.edu
         # Paused: the mccarthy VM is shut down every night until the site launches.
         # Uncomment to resume probing (the site relabel rule below is kept).
         # - https://cormacmccarthy.lib.utk.edu
@@ -61,6 +65,10 @@ spec:
           regex: https://lib\.utk\.edu.*
           targetLabel: site
           replacement: Main site (lib.utk.edu)
+        - sourceLabels: [__param_target]
+          regex: https://polk\.lib\.utk\.edu.*
+          targetLabel: site
+          replacement: Polk Correspondence (polk.lib.utk.edu)
         - sourceLabels: [__param_target]
           regex: https://cormacmccarthy\.lib\.utk\.edu.*
           targetLabel: site
