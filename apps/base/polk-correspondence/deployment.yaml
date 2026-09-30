@@ -25,13 +25,30 @@ spec:
           ports:
             - containerPort: 8080
               name: http
+          # Overrides the image's JAVA_TOOL_OPTIONS (-Xms128m -Xmx384m). Java 8u181
+          # doesn't cap metaspace or direct buffers by default. Setting explicit caps
+          # keeps total JVM memory (~1.2-1.4Gi max) under the container limit, so
+          # running out shows up as an OutOfMemoryError in the logs, not a silent
+          # OOMKill. ExitOnOutOfMemoryError makes the JVM exit on that error so the
+          # pod restarts; the TCP liveness probe would not catch a broken JVM.
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: >-
+                -Xms512m -Xmx768m
+                -XX:MaxMetaspaceSize=192m
+                -XX:MaxDirectMemorySize=128m
+                -XX:ReservedCodeCacheSize=128m
+                -XX:+ExitOnOutOfMemoryError
+                -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication
+          # At 768Mi the pod hit 728Mi within 20 min and was OOMKilled
+          # (2026-09-30), so leave plenty of room above the JVM caps set above.
           resources:
             requests:
               cpu: 250m
-              memory: 512Mi
+              memory: 1Gi
             limits:
-              cpu: 512m
-              memory: 768Mi
+              cpu: "1"
+              memory: 1536Mi
           # eXist can take several minutes to start. The startup probe allows up
           # to 6 min, and readiness waits until the Polk page actually renders.
           startupProbe:
