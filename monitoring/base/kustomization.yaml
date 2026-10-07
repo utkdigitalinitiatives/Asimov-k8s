@@ -19,6 +19,7 @@ resources:
   - blackbox-dashboard.yaml
   - azure-metrics-exporter.yaml
   - azure-vm-alerts.yaml
+  - burstable-credits-dashboard.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: kube-prometheus-stack
