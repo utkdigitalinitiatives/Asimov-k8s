@@ -17,6 +17,8 @@ resources:
   - blackbox-probes.yaml
   - blackbox-alerts.yaml
   - blackbox-dashboard.yaml
+  - azure-metrics-exporter.yaml
+  - azure-vm-alerts.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: kube-prometheus-stack

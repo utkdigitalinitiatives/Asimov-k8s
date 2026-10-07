@@ -1,0 +1,55 @@
+---
+# Alerts on Azure platform metrics from azure-metrics-exporter.yaml. All alert names start with
+# "AzureVM" because Alertmanager routes that prefix to Teams (alertmanager-config-externalsecret.yaml);
+# rename one and it fires into the null receiver.
+#
+# Burstable (B-series) credits, Standard_B2als_v2: earns 36/hour (30% of 2 vCPUs). Credits belong to
+# the instance, so every deploy starts over at ~60 and takes ~24 h to refill; full is ~924 (seen on
+# mccarthy, 2026-10). Above 30% CPU the bank drains (full load on both vCPUs: -84/hour); at 0 the VM
+# is held to 30% and the site slows (EndpointSlow is the symptom).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: azure-vm-alerts
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: kube-prometheus-stack
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: azure-burstable-vms
+      rules:
+        # Early warning: below 200 AND still falling. 200 is ~2.4 h of full load, ~6 h at the 58%
+        # peak seen in September. "Still falling" keeps a fresh instance (starts at ~60, rising)
+        # from firing after every deploy.
+        - alert: AzureVMCPUCreditsLow
+          expr: |
+            azure_metric_vmss{metric="CPU Credits Remaining"} < 200
+            and delta(azure_metric_vmss{metric="CPU Credits Remaining"}[30m]) < 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.resourceName }} CPU credits low ({{ printf \"%.0f\" $value }})"
+            description: "Instance {{ $labels.dimension }} has {{ printf \"%.0f\" $value }} CPU credits left (full is ~924) and the bank is still draining. Sustained CPU load (bots, cron, a runaway process) is the cause; at 0 the VM is held to 30% CPU. Steady load needs Standard_D2as_v5 (no credits)."
+
+        # Nearly empty: ~20 minutes of full load left, then throttled.
+        - alert: AzureVMCPUCreditsExhausted
+          expr: azure_metric_vmss{metric="CPU Credits Remaining"} < 30
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.resourceName }} CPU credits nearly gone ({{ printf \"%.0f\" $value }})"
+            description: "Instance {{ $labels.dimension }} has {{ printf \"%.0f\" $value }} CPU credits left. It is being held, or soon will be, to 30% CPU and the site will be slow."
+
+        # Safety net, like EndpointProbesMissing: without data the two alerts above cannot fire.
+        # Causes: exporter down, its identity or Monitoring Reader role removed, or the VM stopped.
+        - alert: AzureVMMetricsMissing
+          expr: absent(azure_metric_vmss{metric="CPU Credits Remaining"})
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Azure VM credit metrics are not reporting"
+            description: "No CPU Credits Remaining series for 30 minutes, so the credit alerts are blind. Check the azure-metrics-exporter pod log in monitoring (auth errors), the id-asimov-azure-metrics role, and whether the VM is running."
