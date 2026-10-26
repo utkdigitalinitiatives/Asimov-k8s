@@ -11,11 +11,18 @@ spec:
   groups:
     - name: node-capacity
       rules:
+        # Requests count only Pending/Running pods. kube-state-metrics also reports
+        # Completed/Failed pods, which reserve nothing; counting them fired a false
+        # NodeCPURequestsCritical on the system node (Oct 2026).
+
         # CPU Request Alerts
         - alert: NodeCPURequestsHigh
           expr: |
             (
-              sum by (node) (kube_pod_container_resource_requests{resource="cpu", node!=""})
+              sum by (node) (
+                kube_pod_container_resource_requests{resource="cpu", node!=""}
+                * on (namespace, pod) group_left () max by (namespace, pod) (kube_pod_status_phase{phase=~"Pending|Running"} == 1)
+              )
               /
               sum by (node) (kube_node_status_allocatable{resource="cpu"})
             ) * 100 > 85
@@ -29,7 +36,10 @@ spec:
         - alert: NodeCPURequestsCritical
           expr: |
             (
-              sum by (node) (kube_pod_container_resource_requests{resource="cpu", node!=""})
+              sum by (node) (
+                kube_pod_container_resource_requests{resource="cpu", node!=""}
+                * on (namespace, pod) group_left () max by (namespace, pod) (kube_pod_status_phase{phase=~"Pending|Running"} == 1)
+              )
               /
               sum by (node) (kube_node_status_allocatable{resource="cpu"})
             ) * 100 > 95
@@ -44,7 +54,10 @@ spec:
         - alert: NodeMemoryRequestsHigh
           expr: |
             (
-              sum by (node) (kube_pod_container_resource_requests{resource="memory", node!=""})
+              sum by (node) (
+                kube_pod_container_resource_requests{resource="memory", node!=""}
+                * on (namespace, pod) group_left () max by (namespace, pod) (kube_pod_status_phase{phase=~"Pending|Running"} == 1)
+              )
               /
               sum by (node) (kube_node_status_allocatable{resource="memory"})
             ) * 100 > 85
@@ -58,7 +71,10 @@ spec:
         - alert: NodeMemoryRequestsCritical
           expr: |
             (
-              sum by (node) (kube_pod_container_resource_requests{resource="memory", node!=""})
+              sum by (node) (
+                kube_pod_container_resource_requests{resource="memory", node!=""}
+                * on (namespace, pod) group_left () max by (namespace, pod) (kube_pod_status_phase{phase=~"Pending|Running"} == 1)
+              )
               /
               sum by (node) (kube_node_status_allocatable{resource="memory"})
             ) * 100 > 95
@@ -73,7 +89,10 @@ spec:
         - alert: ClusterCPURequestsHigh
           expr: |
             (
-              sum(kube_pod_container_resource_requests{resource="cpu", node!=""})
+              sum(
+                kube_pod_container_resource_requests{resource="cpu", node!=""}
+                * on (namespace, pod) group_left () max by (namespace, pod) (kube_pod_status_phase{phase=~"Pending|Running"} == 1)
+              )
               /
               sum(kube_node_status_allocatable{resource="cpu"})
             ) * 100 > 80
@@ -87,7 +106,10 @@ spec:
         - alert: ClusterMemoryRequestsHigh
           expr: |
             (
-              sum(kube_pod_container_resource_requests{resource="memory", node!=""})
+              sum(
+                kube_pod_container_resource_requests{resource="memory", node!=""}
+                * on (namespace, pod) group_left () max by (namespace, pod) (kube_pod_status_phase{phase=~"Pending|Running"} == 1)
+              )
               /
               sum(kube_node_status_allocatable{resource="memory"})
             ) * 100 > 80
