@@ -44,7 +44,7 @@ spec:
           # (2026-09-30), so leave plenty of room above the JVM caps set above.
           resources:
             requests:
-              cpu: 250m
+              cpu: 75m
               memory: 1Gi
             limits:
               cpu: "1"
