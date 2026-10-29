@@ -71,3 +71,42 @@ spec:
           regex: https://cormacmccarthy\.lib\.utk\.edu.*
           targetLabel: site
           replacement: Cormac McCarthy (cormacmccarthy.lib.utk.edu)
+---
+# On-campus servers (replacing Uptime Kuma). Checked over HTTPS with https_2xx_any_cert,
+# which skips the cert check, because each one sends a cert for a different name. Not plain
+# HTTP: OIT plans to block port 80 at the campus firewall. Tested from an in-cluster pod on
+# Oct 29, 2026: both answer 200 over HTTPS, and the OIT firewall lets the cluster in.
+#   - data.lib.utk.edu    160.36.179.204  bare metal; HTTPS cert is for dlstore.lib.utk.edu
+#   - raven.lib.utk.edu   160.36.239.63   VM; HTTPS cert is for alchemy.lib.utk.edu
+#
+# Limits: the cluster cannot ping (Azure drops outbound ICMP), and it cannot reach campus
+# private IPs or SSH. A campus server with no web port open to the internet needs the
+# campus-side Alloy agent instead (Vikunja card #46). athena.lib.utk.edu is private and is
+# set aside for now.
+#
+# The site label is built from the host name, so a new *.lib.utk.edu server needs only a
+# new target line.
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: campus-servers
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: kube-prometheus-stack
+spec:
+  jobName: blackbox-http-campus
+  interval: 30s
+  module: https_2xx_any_cert
+  prober:
+    url: blackbox-exporter.monitoring.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      static:
+        - https://data.lib.utk.edu
+        - https://raven.lib.utk.edu
+      relabelingConfigs:
+        - sourceLabels: [__param_target]
+          regex: https://([^./]+)\.lib\.utk\.edu.*
+          targetLabel: site
+          replacement: ${1} (campus server)
