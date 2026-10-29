@@ -82,12 +82,15 @@ spec:
 #   - magpie.lib.utk.edu   200; cert is for didash.lib.utk.edu
 #   - oriole.lib.utk.edu   302 -> /login -> 200; cert is for withdraw.lib.utk.edu
 #   - ale.lib.utk.edu      200 (bot-check page); cert is for digital.lib.utk.edu
-# esb and dlprocess are in the campus-servers-tcp Probe below.
+# dlprocess is in the campus-servers-tcp Probe below.
 #
 # Limits: the cluster cannot ping (Azure drops outbound ICMP), and it cannot reach campus
-# private IPs or SSH. heron, porter, lambic and griffin answer only on campus (the OIT
+# private IPs or SSH. heron, porter, lambic, griffin and esb answer only on campus (the OIT
 # firewall drops the cluster on every port), so they wait for the campus-side Alloy agent
-# (Vikunja card #46). athena.lib.utk.edu is private and is set aside for now.
+# (Vikunja card #46). esb lost its only cluster-visible port when Apache was turned off on
+# Oct 29, 2026 (it served an old trace.utk.edu Drupal 7 site that should not be there); on
+# campus it still answers on 22 and on 8080 (Tomcat). athena.lib.utk.edu is private and is
+# set aside for now.
 #
 # The site label is built from the host name, so a new *.lib.utk.edu server needs only a
 # new target line.
@@ -122,8 +125,6 @@ spec:
 ---
 # Campus servers whose HTTPS cannot pass an HTTP check, so we only check that port 443
 # accepts a TCP connection (like Uptime Kuma's "TCP Port" monitor). No TLS here on purpose.
-#   - esb.lib.utk.edu        port 443 does not speak modern TLS (handshake fails from the
-#                            cluster and from campus); its site works only over port 80.
 #   - dlprocess.lib.utk.edu  Apache test page, 403 on /; self-signed cert expired 2021, which
 #                            would fire EndpointCertExpiringSoon forever if probed over TLS.
 apiVersion: monitoring.coreos.com/v1
@@ -143,7 +144,6 @@ spec:
   targets:
     staticConfig:
       static:
-        - esb.lib.utk.edu:443
         - dlprocess.lib.utk.edu:443
       relabelingConfigs:
         - sourceLabels: [__param_target]
