@@ -59,6 +59,13 @@ spec:
             fail_if_not_ssl: true
             tls_config:
               insecure_skip_verify: true
+        # Port-open check for campus servers whose HTTPS cannot pass an HTTP check
+        # (campus-servers-tcp Probe).
+        tcp_connect:
+          prober: tcp
+          timeout: 10s
+          tcp:
+            preferred_ip_protocol: "ip4"
 
     # Tiny footprint — the user pool is tight (see NodeCPURequests alerts), keep requests low.
     resources:

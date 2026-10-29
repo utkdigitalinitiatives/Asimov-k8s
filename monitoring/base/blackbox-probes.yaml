@@ -73,16 +73,21 @@ spec:
           replacement: Cormac McCarthy (cormacmccarthy.lib.utk.edu)
 ---
 # On-campus servers (replacing Uptime Kuma). Checked over HTTPS with https_2xx_any_cert,
-# which skips the cert check, because each one sends a cert for a different name. Not plain
-# HTTP: OIT plans to block port 80 at the campus firewall. Tested from an in-cluster pod on
-# Oct 29, 2026: both answer 200 over HTTPS, and the OIT firewall lets the cluster in.
-#   - data.lib.utk.edu    160.36.179.204  bare metal; HTTPS cert is for dlstore.lib.utk.edu
-#   - raven.lib.utk.edu   160.36.239.63   VM; HTTPS cert is for alchemy.lib.utk.edu
+# which skips the cert check, because most of them send a cert for a different name. Not
+# plain HTTP: OIT plans to block port 80 at the campus firewall. All tested from an
+# in-cluster pod on Oct 29, 2026 (the OIT firewall lets the cluster reach port 443):
+#   - data.lib.utk.edu     200; cert is for dlstore.lib.utk.edu (bare metal)
+#   - raven.lib.utk.edu    200; cert is for alchemy.lib.utk.edu (VM)
+#   - kiwi.lib.utk.edu     200; cert matches
+#   - magpie.lib.utk.edu   200; cert is for didash.lib.utk.edu
+#   - oriole.lib.utk.edu   302 -> /login -> 200; cert is for withdraw.lib.utk.edu
+#   - ale.lib.utk.edu      200 (bot-check page); cert is for digital.lib.utk.edu
+# esb and dlprocess are in the campus-servers-tcp Probe below.
 #
 # Limits: the cluster cannot ping (Azure drops outbound ICMP), and it cannot reach campus
-# private IPs or SSH. A campus server with no web port open to the internet needs the
-# campus-side Alloy agent instead (Vikunja card #46). athena.lib.utk.edu is private and is
-# set aside for now.
+# private IPs or SSH. heron, porter, lambic and griffin answer only on campus (the OIT
+# firewall drops the cluster on every port), so they wait for the campus-side Alloy agent
+# (Vikunja card #46). athena.lib.utk.edu is private and is set aside for now.
 #
 # The site label is built from the host name, so a new *.lib.utk.edu server needs only a
 # new target line.
@@ -105,8 +110,43 @@ spec:
       static:
         - https://data.lib.utk.edu
         - https://raven.lib.utk.edu
+        - https://kiwi.lib.utk.edu
+        - https://magpie.lib.utk.edu
+        - https://oriole.lib.utk.edu
+        - https://ale.lib.utk.edu
       relabelingConfigs:
         - sourceLabels: [__param_target]
           regex: https://([^./]+)\.lib\.utk\.edu.*
+          targetLabel: site
+          replacement: ${1} (campus server)
+---
+# Campus servers whose HTTPS cannot pass an HTTP check, so we only check that port 443
+# accepts a TCP connection (like Uptime Kuma's "TCP Port" monitor). No TLS here on purpose.
+#   - esb.lib.utk.edu        port 443 does not speak modern TLS (handshake fails from the
+#                            cluster and from campus); its site works only over port 80.
+#   - dlprocess.lib.utk.edu  Apache test page, 403 on /; self-signed cert expired 2021, which
+#                            would fire EndpointCertExpiringSoon forever if probed over TLS.
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: campus-servers-tcp
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: kube-prometheus-stack
+spec:
+  jobName: blackbox-tcp-campus
+  interval: 30s
+  module: tcp_connect
+  prober:
+    url: blackbox-exporter.monitoring.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      static:
+        - esb.lib.utk.edu:443
+        - dlprocess.lib.utk.edu:443
+      relabelingConfigs:
+        - sourceLabels: [__param_target]
+          regex: ([^.:/]+)\.lib\.utk\.edu:443
           targetLabel: site
           replacement: ${1} (campus server)
