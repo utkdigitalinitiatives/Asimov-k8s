@@ -1,13 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: solr-system
-
+# The solr-system namespace override lives in ./solr-system so that components
+# with their own namespace (or cluster-scoped only) are not forced into it.
 resources:
-  - ../base
-
-patchesStrategicMerge:
-  - solr-operator-values.yaml
+  - solr-system
+  - ../base/gateway-api
+  - ../base/nginx-gateway-fabric
 
 commonLabels:
   environment: production

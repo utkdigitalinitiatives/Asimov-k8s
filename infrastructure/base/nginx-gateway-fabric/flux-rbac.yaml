@@ -1,0 +1,54 @@
+# Flux runs in multi-tenancy mode (--default-service-account=flux-applier), so the
+# helm-controller installs this HelmRelease as nginx-gateway/flux-applier. That
+# account needs every permission the NGF chart's objects require, including the
+# rights to create NGF's own ClusterRole (escalate/bind).
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flux-applier
+  namespace: nginx-gateway
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: flux-applier-nginx-gateway-fabric
+rules:
+# NGF's own CRDs (gateway.nginx.org), installed by the chart
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["*"]
+# GatewayClass "nginx" (Gateway API) and NginxGateway/NginxProxy (NGF config)
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["gateway.nginx.org"]
+  resources: ["*"]
+  verbs: ["*"]
+# NGF's ServiceAccounts, RBAC, Service, Deployment, cert-generator Job, and
+# Helm's release Secrets
+- apiGroups: [""]
+  resources: ["namespaces", "serviceaccounts", "services", "secrets", "configmaps", "events"]
+  verbs: ["*"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["*"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["*"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flux-applier-nginx-gateway-fabric
+subjects:
+- kind: ServiceAccount
+  name: flux-applier
+  namespace: nginx-gateway
+roleRef:
+  kind: ClusterRole
+  name: flux-applier-nginx-gateway-fabric
+  apiGroup: rbac.authorization.k8s.io

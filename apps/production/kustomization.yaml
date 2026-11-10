@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - cert-config
+  - shared-gateway
   - solr-mainsite
   - redis-mainsite
   - polk-correspondence

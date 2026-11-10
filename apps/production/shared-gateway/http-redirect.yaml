@@ -1,0 +1,17 @@
+# Redirects all plain-HTTP traffic to HTTPS. cert-manager's HTTP-01 challenge
+# routes are hostname- and exact-path-specific, so they take precedence.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: http-to-https
+  namespace: shared-gateway
+spec:
+  parentRefs:
+    - name: shared
+      sectionName: http
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
