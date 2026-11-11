@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Gateway API CRDs, standard channel, vendored unmodified from
+# https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.3/standard-install.yaml
+#
+# v1.6.3 is the version NGINX Gateway Fabric 2.8.1 is built against. When upgrading
+# NGF, check nginx-gateway-fabric/config/crd/gateway-api/standard at the new tag
+# and re-vendor this file to match.
+resources:
+  - standard-install.yaml

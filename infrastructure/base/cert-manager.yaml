@@ -38,6 +38,14 @@ spec:
     # Install CRDs with the cert-manager Helm chart
     installCRDs: true
 
+    # Let cert-manager issue certificates for Gateway API listeners and solve
+    # HTTP-01 challenges with an HTTPRoute (used by the shared NGF Gateway).
+    # The Gateway API CRDs must exist before cert-manager starts with this on.
+    config:
+      apiVersion: controller.config.cert-manager.io/v1alpha1
+      kind: ControllerConfiguration
+      enableGatewayAPI: true
+
     # Global settings
     global:
       leaderElection:

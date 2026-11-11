@@ -1,0 +1,24 @@
+# The one Gateway every app attaches to. NGF provisions its NGINX Deployment and
+# LoadBalancer Service (public IP) in this namespace.
+#
+# Per app migration: add an HTTPS listener here (hostname + certificateRefs) and an
+# HTTPRoute in the app's namespace. The annotation makes cert-manager issue each
+# HTTPS listener's certificate from the shared ClusterIssuer.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shared
+  namespace: shared-gateway
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  gatewayClassName: nginx
+  listeners:
+    # Plain HTTP: only serves cert-manager's HTTP-01 challenges and the
+    # HTTP -> HTTPS redirect, both of which live in this namespace.
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same

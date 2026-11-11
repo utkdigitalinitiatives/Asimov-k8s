@@ -1,0 +1,81 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: nginx-gateway-fabric
+  namespace: nginx-gateway
+spec:
+  type: oci
+  interval: 24h
+  url: oci://ghcr.io/nginx/charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nginx-gateway-fabric
+  namespace: nginx-gateway
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: nginx-gateway-fabric
+      version: "2.8.1"
+      sourceRef:
+        kind: HelmRepository
+        name: nginx-gateway-fabric
+        namespace: nginx-gateway
+      interval: 12h
+  # The chart ships NGF's own CRDs (gateway.nginx.org). The Gateway API CRDs are
+  # not in the chart; they come from ../gateway-api in this repo.
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+  values:
+    # Control plane: watches Gateway/HTTPRoute objects and configures NGINX.
+    nginxGateway:
+      gatewayClassName: nginx
+      nodeSelector:
+        kubernetes.azure.com/mode: user
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+
+    # Data plane: NGF creates one NGINX Deployment + LoadBalancer Service per
+    # Gateway, in the Gateway's namespace. These settings apply to all of them.
+    nginx:
+      pod:
+        nodeSelector:
+          kubernetes.azure.com/mode: user
+      container:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 1000m
+            memory: 256Mi
+      service:
+        type: LoadBalancer
+        # Local keeps the real client IP in NGINX access logs.
+        externalTrafficPolicy: Local
+        # Pin the Gateway to the reserved static Public IP pip-asimov-gateway
+        # (74.159.154.72, node resource group mc_rg-asimov_asimov_eastus2), so
+        # the address survives NGF reinstalls and Gateway recreation. Every
+        # app's DNS points at this IP.
+        patches:
+          - type: StrategicMerge
+            value:
+              metadata:
+                annotations:
+                  service.beta.kubernetes.io/azure-pip-name: pip-asimov-gateway
+
+    certGenerator:
+      nodeSelector:
+        kubernetes.azure.com/mode: user

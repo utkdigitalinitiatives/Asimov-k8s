@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Everything in infrastructure/base goes into solr-system, as before.
+namespace: solr-system
+
+resources:
+  - ../../base
+
+patchesStrategicMerge:
+  - solr-operator-values.yaml
