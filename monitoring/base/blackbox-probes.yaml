@@ -82,8 +82,6 @@ spec:
 #   - magpie.lib.utk.edu   200; cert is for didash.lib.utk.edu
 #   - oriole.lib.utk.edu   302 -> /login -> 200; cert is for withdraw.lib.utk.edu
 #   - ale.lib.utk.edu      200 (bot-check page); cert is for digital.lib.utk.edu
-# dlprocess is in the campus-servers-tcp Probe below.
-#
 # Limits: the cluster cannot ping (Azure drops outbound ICMP), and it cannot reach campus
 # private IPs or SSH. heron, porter, lambic, griffin and esb answer only on campus (the OIT
 # firewall drops the cluster on every port), so they wait for the campus-side Alloy agent
@@ -120,33 +118,5 @@ spec:
       relabelingConfigs:
         - sourceLabels: [__param_target]
           regex: https://([^./]+)\.lib\.utk\.edu.*
-          targetLabel: site
-          replacement: ${1} (campus server)
----
-# Campus servers whose HTTPS cannot pass an HTTP check, so we only check that port 443
-# accepts a TCP connection (like Uptime Kuma's "TCP Port" monitor). No TLS here on purpose.
-#   - dlprocess.lib.utk.edu  Apache test page, 403 on /; self-signed cert expired 2021, which
-#                            would fire EndpointCertExpiringSoon forever if probed over TLS.
-apiVersion: monitoring.coreos.com/v1
-kind: Probe
-metadata:
-  name: campus-servers-tcp
-  namespace: monitoring
-  labels:
-    release: kube-prometheus-stack
-    app.kubernetes.io/part-of: kube-prometheus-stack
-spec:
-  jobName: blackbox-tcp-campus
-  interval: 30s
-  module: tcp_connect
-  prober:
-    url: blackbox-exporter.monitoring.svc.cluster.local:9115
-  targets:
-    staticConfig:
-      static:
-        - dlprocess.lib.utk.edu:443
-      relabelingConfigs:
-        - sourceLabels: [__param_target]
-          regex: ([^.:/]+)\.lib\.utk\.edu:443
           targetLabel: site
           replacement: ${1} (campus server)

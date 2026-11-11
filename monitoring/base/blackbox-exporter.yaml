@@ -59,8 +59,8 @@ spec:
             fail_if_not_ssl: true
             tls_config:
               insecure_skip_verify: true
-        # Port-open check for campus servers whose HTTPS cannot pass an HTTP check
-        # (campus-servers-tcp Probe).
+        # Port-open check for servers whose HTTPS cannot pass an HTTP check. No Probe uses
+        # it now (dlprocess was removed Nov 11, 2026); kept so a TCP check is one Probe away.
         tcp_connect:
           prober: tcp
           timeout: 10s
